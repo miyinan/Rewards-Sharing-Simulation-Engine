@@ -25,11 +25,10 @@ class Pool:
         self.set_desirability()
 
     def set_profit(self, reward_scheme):
-        self.potential_profit = hlp.calculate_potential_profit(reward_scheme=reward_scheme, pledge=self.pledge,
-                                                               cost=self.cost)
+        self.potential_profit = hlp.calculate_potential_profit(reward_scheme=reward_scheme, stake=self.stake, is_private=self.is_private)
 
     def set_desirability(self):
-        self.desirability = hlp.calculate_pool_desirability(margin=self.margin, potential_profit=self.potential_profit)
+        self.desirability = hlp.calculate_pool_desirability(margin=self.margin, potential_profit=self.potential_profit,is_private=self.is_private)
 
     def update_delegation(self, new_delegation, delegator_id):
         if delegator_id in self.delegators:
@@ -38,3 +37,6 @@ class Pool:
         self.delegators[delegator_id] = new_delegation
         if self.delegators[delegator_id] < hlp.MIN_STAKE_UNIT:
             self.delegators.pop(delegator_id)
+
+    def get_stake(self):
+        return self.stake

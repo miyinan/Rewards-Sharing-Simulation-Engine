@@ -155,7 +155,7 @@ def generate_cost_distr_nrm(num_agents, low, high, mean, stddev):
 
 
 # @lru_cache(maxsize=1024)
-def calculate_potential_profit(reward_scheme, stake):
+def calculate_potential_profit(reward_scheme, stake,is_private):
     """
     Calculate a pool's potential profit, which can be defined as the profit it would get at saturation level
     :param reward_scheme: the reward scheme object (of an RSS subclass) used in the simulation
@@ -163,7 +163,8 @@ def calculate_potential_profit(reward_scheme, stake):
     :param cost: the cost of the pool in question
     :return: float, the maximum possible profit that this pool can yield, aka its profit at saturation
     """
-
+    if is_private:
+        return 0
     beta_stake_reward = calculate_pool_reward(
         reward_scheme=reward_scheme, pool_stake=reward_scheme.beta(), total_stake=get_total_stake()
     )
@@ -278,7 +279,9 @@ def calculate_suitable_margin(potential_profit, target_desirability):
 
 
 @lru_cache(maxsize=1024)
-def calculate_pool_desirability(margin, potential_profit):
+def calculate_pool_desirability(margin, potential_profit,is_private):
+    if is_private:
+        return 0
     return max((1 - margin) * potential_profit, 0)
 
 

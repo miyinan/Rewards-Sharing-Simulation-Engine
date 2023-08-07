@@ -15,11 +15,12 @@ import logic.helper as hlp
 import logic.model_reporters as reporters
 import logic.stakeholder_profiles as profiles
 import logic.reward_schemes as rss
+import logic.liquid_contract as lc
 
 
 class Simulation(Model):
     def __init__(
-            self, n=1000, k=100, a0=0.3, stake_distr_source='Pareto', agent_profile_distr=None,
+            self, n=1000, beta=100, alpha=0.3, stake_distr_source='Pareto', agent_profile_distr=None,
             inactive_stake_fraction=0, inactive_stake_fraction_known=False, relative_utility_threshold=0,
             absolute_utility_threshold=0, seed=None, pareto_param=2.0, max_iterations=1000, cost_min=1e-5,
             cost_max=1e-4, extra_pool_cost_fraction=0.4, agent_activation_order="random",
@@ -68,6 +69,7 @@ class Simulation(Model):
         total_phases = 1
 
         self.reward_scheme = rss.RSS_MAPPING[args['reward_scheme']](-1, -1)
+        
 
         other_fields = [
             'n', 'k', 'a0', 'relative_utility_threshold', 'absolute_utility_threshold', 'max_iterations',
