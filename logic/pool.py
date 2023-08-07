@@ -3,7 +3,7 @@ import logic.helper as hlp
 
 
 class Pool:
-    def __init__(self, pool_id, cost, pledge, owner, reward_scheme, margin=-1, is_private=False):
+    def __init__(self, pool_id, cost, pledge, owner, reward_scheme, margin=0, is_private=False):
         self.id = pool_id
         self.cost = cost
         self.pledge = pledge

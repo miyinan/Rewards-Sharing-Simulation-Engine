@@ -382,6 +382,14 @@ def get_operator_count(model):
     return len({pool.owner for pool in model.get_pools_list()})
 
 
+def get_total_stake(model):
+    current_pools = model.get_pools_list()
+    if len(current_pools) == 0:
+        return 0
+    stakes = [pool.stake for pool in current_pools]
+    return fsum(stakes)
+
+
 ALL_MODEL_REPORTEERS = {
     "Pool count": get_number_of_pools,
     "Total pledge": get_total_pledge,
@@ -414,7 +422,8 @@ ALL_MODEL_REPORTEERS = {
     "StakePairs": get_stakes_n_margins,
     "Total delegated stake": get_total_delegated_stake,
     "Total agent stake": get_active_stake_agents,
-    "Operator count": get_operator_count
+    "Operator count": get_operator_count,
+    "Total stake": get_total_stake
 }
 
 REPORTER_IDS = {
@@ -447,5 +456,6 @@ REPORTER_IDS = {
     27: "Stake per agent id",
     28: "Total delegated stake",
     29: "Total agent stake",
-    30: "Operator count"
+    30: "Operator count",
+    31: "Total stake"
 }

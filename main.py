@@ -13,8 +13,8 @@ def main():
 
     sim = simulation.Simulation(
         n=args.n,
-        k=args.k,
-        a0=args.a0,
+        beta=args.beta,
+        alpha=args.alpha,
         stake_distr_source=args.stake_distr_source,
         agent_profile_distr=args.agent_profile_distr,
         inactive_stake_fraction=args.inactive_stake_fraction,

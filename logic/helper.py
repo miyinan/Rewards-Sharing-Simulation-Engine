@@ -155,7 +155,7 @@ def generate_cost_distr_nrm(num_agents, low, high, mean, stddev):
 
 
 # @lru_cache(maxsize=1024)
-def calculate_potential_profit(reward_scheme, pledge, cost):
+def calculate_potential_profit(reward_scheme, stake):
     """
     Calculate a pool's potential profit, which can be defined as the profit it would get at saturation level
     :param reward_scheme: the reward scheme object (of an RSS subclass) used in the simulation
@@ -163,35 +163,43 @@ def calculate_potential_profit(reward_scheme, pledge, cost):
     :param cost: the cost of the pool in question
     :return: float, the maximum possible profit that this pool can yield, aka its profit at saturation
     """
-    potential_reward = calculate_pool_reward(
-        reward_scheme=reward_scheme, pool_stake=reward_scheme.get_pool_saturation_threshold(pledge), pool_pledge=pledge
+
+    beta_stake_reward = calculate_pool_reward(
+        reward_scheme=reward_scheme, pool_stake=reward_scheme.beta(), total_stake=get_total_stake()
     )
-    return potential_reward - cost
+    current_stake_reward = calculate_pool_reward(
+        reward_scheme=reward_scheme, pool_stake=stake, total_stake=get_total_stake()
+    )
+    return beta_stake_reward - current_stake_reward
+
+
+def get_total_stake():
+    total_stake=REPORTER_IDS[31]
+    return total_stake
+
+
 
 
 # @lru_cache(maxsize=1024)
-def calculate_current_profit(stake, pledge, cost, reward_scheme):
-    reward = calculate_pool_reward(reward_scheme=reward_scheme, pool_stake=stake, pool_pledge=pledge)
-    return reward - cost
+def calculate_current_profit(reward_scheme, stake):
+    reward = calculate_pool_reward(reward_scheme=reward_scheme, pool_stake=stake, total_stake=get_total_stake())
+    return reward
 
 
-def calculate_pool_reward(reward_scheme, pool_stake, pool_pledge):
-    return reward_scheme.calculate_pool_reward(pool_pledge=pool_pledge, pool_stake=pool_stake)
-
+def calculate_pool_reward(reward_scheme, pool_stake, total_stake):
+    return reward_scheme.calculate_pool_reward(pool_stake=pool_stake, total_stake=total_stake)
 
 @lru_cache(maxsize=1024)
-def calculate_delegator_reward_from_pool(pool_margin, pool_cost, pool_reward, delegator_stake_fraction):
-    margin_factor = (1 - pool_margin) * delegator_stake_fraction
-    pool_profit = pool_reward - pool_cost
-    r_d = max(margin_factor * pool_profit, 0)
+def calculate_delegator_reward_from_pool(pool_margin, pool_reward, delegator_stake_fraction):
+    pool_profit = pool_reward*delegator_stake_fraction*(1-pool_margin)
+    r_d = max(pool_profit, 0)
     return r_d
 
 
 @lru_cache(maxsize=1024)
 def calculate_operator_reward_from_pool(pool_margin, pool_cost, pool_reward, operator_stake_fraction):
-    margin_factor = pool_margin + ((1 - pool_margin) * operator_stake_fraction)
-    pool_profit = pool_reward - pool_cost
-    return pool_profit if pool_profit <= 0 else pool_profit * margin_factor
+    pool_profit = pool_reward*operator_stake_fraction+pool_reward*(1-operator_stake_fraction)*pool_margin-pool_cost
+    return pool_profit
 
 
 def calculate_non_myopic_pool_stake(pool, pool_rankings, reward_scheme, total_stake):
