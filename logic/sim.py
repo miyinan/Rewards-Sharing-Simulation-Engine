@@ -68,11 +68,11 @@ class Simulation(Model):
         self.current_phase = 0
         total_phases = 1
 
-        self.reward_scheme = rss.RSS_MAPPING[args['reward_scheme']](-1, -1)
+        self.reward_scheme = rss.RSS_MAPPING[0]
         
 
         other_fields = [
-            'n', 'k', 'a0', 'relative_utility_threshold', 'absolute_utility_threshold', 'max_iterations',
+            'n', 'alpha', 'beta', 'relative_utility_threshold', 'absolute_utility_threshold', 'max_iterations',
             'extra_pool_cost_fraction', 'agent_activation_order', 'generate_graphs'
         ]
         multi_phase_params = {}
@@ -288,9 +288,9 @@ class Simulation(Model):
              0 if agents[agent_id].strategy is None else len(agents[agent_id].strategy.owned_pools),
              0 if agents[agent_id].strategy is None else sum(
                  [pool.stake for pool in agents[agent_id].strategy.owned_pools.values()]),
-             hlp.calculate_pool_splitting_profit(self.reward_scheme.a0, self.extra_pool_cost_fraction,
+             hlp.calculate_pool_splitting_profit(0, self.extra_pool_cost_fraction,
                                                  agents[agent_id].cost, agents[agent_id].stake),
-             "YES" if hlp.calculate_pool_splitting_profit(self.reward_scheme.a0, self.extra_pool_cost_fraction,
+             "YES" if hlp.calculate_pool_splitting_profit(0, self.extra_pool_cost_fraction,
                                                           agents[agent_id].cost, agents[agent_id].stake) > 0 else "NO"
              ] for agent_id in range(len(agents))
         ])

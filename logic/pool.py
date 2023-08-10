@@ -15,7 +15,7 @@ class Pool:
         self.margin = margin
 
     @property
-    def margin(self):  # maybe also make pledge property? and whenever it's set then change potential profit
+    def margin(self): 
         return self._margin
 
     @margin.setter
@@ -37,6 +37,7 @@ class Pool:
         self.delegators[delegator_id] = new_delegation
         if self.delegators[delegator_id] < hlp.MIN_STAKE_UNIT:
             self.delegators.pop(delegator_id)
+
 
     def get_stake(self):
         return self.stake

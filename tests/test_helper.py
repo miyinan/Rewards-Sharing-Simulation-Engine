@@ -3,6 +3,7 @@ import random
 import pytest
 import logic.helper as hlp
 import logic.reward_schemes as rss
+from logic.sim import Simulation
 
 from logic.pool import Pool
 
@@ -27,78 +28,29 @@ def test_generate_stake_distr_flat():
     assert pytest.approx(sum(stk_distr)) == 1
 
 
+
 def test_calculate_pool_reward_variable_stake():
     # GIVEN
-    reward_scheme = rss.CardanoRSS(k=10, a0=0.3)
-    stakes = [0.01, 0.1, 0.2]
-    pledges = [0.01, 0.01, 0.01]
+    model = Simulation(n=1000,beta=0.2,alpha=0.1)
+    reward_scheme = rss.Ethereum(model=model,alpha=0.1, beta=0.2)
+    pool_stake = [0.01,0.1,0.2,0.4]
+    model.total_stake=1
+
 
     # WHEN
     results = [
         hlp.calculate_pool_reward(
             reward_scheme=reward_scheme,
-            pool_stake=stakes[i],
-            pool_pledge=pledges[i],
+            pool_stake=pool_stake[i]
         )
-        for i in range(len(stakes))
+        for i in range(len(pool_stake))
     ]
 
     # THEN
-    assert results[0] < results[1] == results[2]
+    assert results[0]  < results[1]
+    assert results[1]  < results[2]
+    assert results[2]  == results[3]
 
-
-def test_calculate_pool_reward_variable_pledge():
-    reward_scheme = rss.CardanoRSS(k=10, a0=0.3)
-    stakes = [0.1, 0.1, 0.1]
-    pledges = [0.01, 0.05, 0.1]
-
-    results = [
-        hlp.calculate_pool_reward(
-            reward_scheme=reward_scheme,
-            pool_stake=stakes[i],
-            pool_pledge=pledges[i]
-        )
-        for i in range(len(stakes))
-    ]
-
-    assert results[0] < results[1] < results[2]
-
-
-def test_calculate_pool_reward_variable_stake_a0_zero():
-    # GIVEN
-    reward_scheme = rss.CardanoRSS(k=10, a0=0)
-    stakes = [0.01, 0.1, 0.2]
-    pledges = [0.01, 0.01, 0.01]
-
-    # WHEN
-    results = [
-        hlp.calculate_pool_reward(
-            reward_scheme=reward_scheme,
-            pool_stake=stakes[i],
-            pool_pledge=pledges[i]
-        )
-        for i in range(len(stakes))
-    ]
-
-    # THEN
-    assert results[0] < results[1] == results[2]
-
-
-def test_calculate_pool_reward_variable_pledge_a0_zero():
-    reward_scheme = rss.CardanoRSS(k=10, a0=0)
-    stakes = [0.1, 0.1, 0.1]
-    pledges = [0.01, 0.05, 0.1]
-
-    results = [
-        hlp.calculate_pool_reward(
-            reward_scheme=reward_scheme,
-            pool_stake=stakes[i],
-            pool_pledge=pledges[i]
-        )
-        for i in range(len(stakes))
-    ]
-
-    assert results[0] == results[1] == results[2]
 
 
 def test_calculate_ranks():
@@ -137,10 +89,6 @@ def test_calculate_cost_per_pool():
 
     assert cost_per_pool == expected_cost_per_pool
     assert cost_per_pool * num_pools == expected_total_cost
-
-
-# todo maybe move test(s) to different file (for testing reward schemes)
-def test_calculate_pool_reward_curve_pledge_benefit():
     # results of options 0 and 4 must be the same when curve_root = 1
     reward_scheme_0 = rss.CardanoRSS(k=10, a0=0.3)
     stakes = [0.01, 0.1, 0.2]
@@ -179,9 +127,10 @@ def test_calculate_pool_reward_curve_pledge_benefit():
 
     assert results_0 != results_4_
 
-
+# not used in ethereum, don't need to rank
+'''
 def test_calculate_non_myopic_pool_stake():
-    reward_scheme = rss.CardanoRSS(k=10, a0=0.3)
+    reward_scheme = rss.Ethereum(alpha=0.001, beta=0.004)
     pools = {
         i: Pool(pool_id=i, cost=0.0001, pledge=0.001, owner=i, reward_scheme=reward_scheme, margin=0)
         for i in range(1, 11)
@@ -193,7 +142,6 @@ def test_calculate_non_myopic_pool_stake():
     ranks = list(pools.values())
     ranks.sort(key=hlp.pool_comparison_key)
     pool_stake_nm = hlp.calculate_non_myopic_pool_stake(pool=pool_11, pool_rankings=ranks, reward_scheme=reward_scheme,
-                                                        total_stake=1)
     assert pool_stake_nm == 0.001
 
     # pool belongs in the top k and pool_stake < global_saturation_threshold, so stake_nm = global_saturation_threshold
@@ -222,24 +170,11 @@ def test_calculate_non_myopic_pool_stake():
     pool_stake_nm = hlp.calculate_non_myopic_pool_stake(pool=pool_11, pool_rankings=ranks, reward_scheme=reward_scheme,
                                                         total_stake=1)
     assert pool_stake_nm == 0.001
+'''
 
-    # there are less than k pools, so pool necessarily in the top k
-    reward_scheme = rss.CardanoRSS(k=100, a0=0.3)
-    pools = {
-        i: Pool(pool_id=i, cost=0.0001, pledge=0.001, owner=i, reward_scheme=reward_scheme, margin=0)
-        for i in range(1, 11)
-    }
-    pool_11 = Pool(pool_id=11, cost=0.001, pledge=0.00001, owner=11, reward_scheme=reward_scheme, margin=0)
-    pools[11] = pool_11
-    ranks = list(pools.values())
-    ranks.sort(key=hlp.pool_comparison_key)
-    pool_stake_nm = hlp.calculate_non_myopic_pool_stake(pool=pool_11, pool_rankings=ranks, reward_scheme=reward_scheme,
-                                                        total_stake=1)
-    assert pool_stake_nm == 0.01
-
-
+'''
 # todo update test
-def test_read_stake_distr_from_file():
+def test_read_stake_distr_from_file(): # i cannot find this file
     # case 1: file exists and n == rows
     assert True
 
@@ -254,7 +189,7 @@ def test_read_stake_distr_from_file():
     with pytest.raises(FileNotFoundError) as e_info:
         hlp.read_stake_distr_from_file(filename=filename, num_agents=1000)
     assert e_info.type == FileNotFoundError
-
+'''
 
 def test_write_read_seq_id():
     hlp.write_seq_id(seq=555, filename='test-sequence.dat')
@@ -263,18 +198,11 @@ def test_write_read_seq_id():
     assert seq_id == 555
 
 
-def test_calculate_pool_reward_cip_50():
-    stake = 0.01
-    pledge = 0.001
-    reward_scheme = rss.CIP50RSS(k=100, a0=100)
 
-    r = hlp.calculate_pool_reward(reward_scheme, stake, pledge)
-
-    assert r == 0.01
 
 
 def test_find_target_pool():
-    reward_scheme = rss.CardanoRSS(k=100, a0=0.3)
+    reward_scheme = rss.Ethereum(alpha=0.001, beta=0.2)
     target_stake = 0.14
     pools = [
         Pool(pool_id=i, cost=0.0001, pledge=0.001+0.00001*i, owner=i, reward_scheme=reward_scheme, margin=0)
@@ -285,3 +213,16 @@ def test_find_target_pool():
     target_pool = hlp.find_target_pool(pools, target_stake, reward_scheme)
 
     assert pools.index(target_pool) == 13
+
+
+def test_calculate_potential_profit():
+    reward_scheme = rss.Ethereum(alpha=0.001, beta=0.2)
+    pool = Pool(pool_id=1, cost=0.0001, pledge=0.001, owner=1, reward_scheme=reward_scheme, margin=0)
+    total_stake = 0.1
+    potential_profit = hlp.calculate_potential_profit(reward_scheme,pool.stake,total_stake,False)
+
+    assert potential_profit == 0.0001
+    
+
+
+    

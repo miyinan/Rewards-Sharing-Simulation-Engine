@@ -23,6 +23,8 @@ sns.set_theme()
 MIN_STAKE_UNIT = 2.2e-17
 
 
+
+# ------------------------------------------ generate distribution helper ------------------------------------------ #
 def read_stake_distr_from_file(num_agents=10000, seed=42):
     default_filename = 'synthetic-stake-distribution-10000-agents.csv'
     filename = 'synthetic-stake-distribution-' + str(num_agents) + '-agents.csv'
@@ -56,7 +58,6 @@ def generate_stake_distr_disparity(n, x=0.3, c=3):
     low_end_stake = (1 - x) / (n - c)
     stk_dstr.extend([high_end_stake for _ in range(c)])
     stk_dstr.extend([low_end_stake for _ in range(n - c)])
-
     return stk_dstr
 
 
@@ -154,8 +155,11 @@ def generate_cost_distr_nrm(num_agents, low, high, mean, stddev):
     return costs
 
 
+
+# ------------------------------------------ calculate reward helper ------------------------------------------ #
+
 # @lru_cache(maxsize=1024)
-def calculate_potential_profit(reward_scheme, stake,is_private):
+def calculate_potential_profit(reward_scheme, stake,total_stake,is_private):
     """
     Calculate a pool's potential profit, which can be defined as the profit it would get at saturation level
     :param reward_scheme: the reward scheme object (of an RSS subclass) used in the simulation
@@ -166,17 +170,16 @@ def calculate_potential_profit(reward_scheme, stake,is_private):
     if is_private:
         return 0
     beta_stake_reward = calculate_pool_reward(
-        reward_scheme=reward_scheme, pool_stake=reward_scheme.beta(), total_stake=get_total_stake()
+        reward_scheme=reward_scheme, pool_stake=reward_scheme.beta(), total_stake=total_stake
     )
     current_stake_reward = calculate_pool_reward(
-        reward_scheme=reward_scheme, pool_stake=stake, total_stake=get_total_stake()
+        reward_scheme=reward_scheme, pool_stake=stake, total_stake=total_stake
     )
     return beta_stake_reward - current_stake_reward
 
 
 def get_total_stake():
-    total_stake=REPORTER_IDS[31]
-    return total_stake
+    return model.total_stake
 
 
 
@@ -201,6 +204,10 @@ def calculate_delegator_reward_from_pool(pool_margin, pool_reward, delegator_sta
 def calculate_operator_reward_from_pool(pool_margin, pool_cost, pool_reward, operator_stake_fraction):
     pool_profit = pool_reward*operator_stake_fraction+pool_reward*(1-operator_stake_fraction)*pool_margin-pool_cost
     return pool_profit
+
+
+
+
 
 
 def calculate_non_myopic_pool_stake(pool, pool_rankings, reward_scheme, total_stake):
@@ -259,6 +266,7 @@ def generate_execution_id(args_dict):
                      for key, value in list(args_dict.items())[:num_args_to_use]])[:max_characters]
 
 
+
 @lru_cache(maxsize=1024)
 def calculate_cost_per_pool(num_pools, initial_cost, extra_pool_cost_fraction):
     """
@@ -286,21 +294,24 @@ def calculate_pool_desirability(margin, potential_profit,is_private):
 
 
 @lru_cache(maxsize=1024)
-def calculate_myopic_pool_desirability(margin, current_profit):
+def calculate_myopic_pool_desirability(margin, current_profit, is_private):
+    if is_private:
+        return 0
     return max((1 - margin) * current_profit, 0)
 
 
 # @lru_cache(maxsize=1024)
 def calculate_operator_utility_from_pool(pool_stake, pledge, margin, cost, reward_scheme):
-    r = calculate_pool_reward(reward_scheme=reward_scheme, pool_stake=pool_stake, pool_pledge=pledge)
+    r = calculate_pool_reward(reward_scheme=reward_scheme, pool_stake=pool_stake, total_stake=get_total_stake())
     stake_fraction = pledge / pool_stake
     return calculate_operator_reward_from_pool(pool_margin=margin, pool_cost=cost, pool_reward=r,
                                                operator_stake_fraction=stake_fraction)
 
 
+
 # @lru_cache(maxsize=1024)
-def calculate_delegator_utility_from_pool(stake_allocation, pool_stake, pledge, margin, cost, reward_scheme):
-    r = calculate_pool_reward(reward_scheme=reward_scheme, pool_stake=pool_stake, pool_pledge=pledge)
+def calculate_delegator_utility_from_pool(stake_allocation, pool_stake, margin, cost, reward_scheme):
+    r = calculate_pool_reward(reward_scheme=reward_scheme, pool_stake=pool_stake, total_stake=get_total_stake())
     stake_fraction = stake_allocation / pool_stake
     return calculate_delegator_reward_from_pool(pool_margin=margin, pool_cost=cost, pool_reward=r,
                                                 delegator_stake_fraction=stake_fraction)
@@ -325,6 +336,9 @@ def calculate_pledge_per_pool(agent_stake, global_saturation_threshold, num_pool
     return min(agent_stake / num_pools, global_saturation_threshold)
 
 
+
+
+# ------------------------------------------ export helper ------------------------------------------ #
 def export_csv_file(rows, filepath):
     with open(filepath, 'w', newline='') as file:
         writer = csv.writer(file)
@@ -373,6 +387,7 @@ def write_to_csv(filepath, header, row):
         writer.writerow(row)
 
 
+# ------------------------------------------ plot helper ------------------------------------------ #
 def plot_line(data, execution_id, color, x_label, y_label, filename, equilibrium_steps, pivot_steps,
               path, title='', show_equilibrium=False):
     equilibrium_colour = 'mediumseagreen'
@@ -469,6 +484,10 @@ def plot_aggregate_data_heatmap(df, variables, model_reporters, output_dir):
         plt.close(fig)
 
 
+
+
+
+# ------------------------------------------ other helper ------------------------------------------ #
 def calculate_pool_splitting_profit(a0, phi, cost, stake):
     return (1 + a0) * (1 - phi) * cost - TOTAL_EPOCH_REWARDS_R * stake * a0
 
@@ -505,6 +524,8 @@ def pool_comparison_key(pool):
     return -pool.desirability, -pool.potential_profit, pool.id
 
 
+
+# ------------------------------------------ argparse helper ------------------------------------------ #   
 def positive_int(value):
     int_value = int(value)
     if int_value <= 0:

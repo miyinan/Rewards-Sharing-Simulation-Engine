@@ -239,7 +239,7 @@ class Stakeholder(Agent):
 
         return Strategy(stake_allocations=allocations, owned_pools=owned_pools)
 
-    def find_delegation_for_operator(self, total_pledge):
+    def find_delegation_for_operator(self, total_pledge): # I think this one should rename to find_operator_to_delegate
         allocations = dict()
         remaining_stake = self.stake - total_pledge
         if remaining_stake > 0:
