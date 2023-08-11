@@ -504,7 +504,7 @@ def find_target_pool(pools_ranked, target_stake, reward_scheme):
         top_pools.append(pool)
         if pool is None:
             break
-        covered_stake = fsum([reward_scheme.get_pool_saturation_threshold(pool.pledge) for pool in
+        covered_stake = fsum([reward_scheme.get_pool_saturation_threshold() for pool in
                               top_pools])  # using fsum to avoid floating point errors but it might be an overhead
     return top_pools[-1] if len(top_pools) > 0 else None
 

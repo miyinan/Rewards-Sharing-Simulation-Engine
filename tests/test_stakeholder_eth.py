@@ -115,7 +115,6 @@ def test_find_delegation_move():
 
     
     
-    
 
     # one pool with higher desirability, choose that,skip the private one(margin == 0)
     delegator_strategy = agent159.find_delegation_move()
@@ -151,14 +150,14 @@ def test_find_delegation_move():
 
 
 def test_execute_strategy(mocker):
-    model=Ethereum_Sim(beta=0.2,alpha=0.1)
+    model = Ethereum_Sim(beta=0.2,alpha=0.1)
     agent1 = EthStakeholder(unique_id=1, model=model, stake=0.1, cost=0.001)
     agent2= EthStakeholder(unique_id=2, model=model, stake=0.05, cost=0.001)
     agent3 = EthStakeholder(unique_id=3, model=model, stake=0.001, cost=0.001)
     agent4 = EthStakeholder(unique_id=4, model=model, stake=0.05, cost=0.001)
     
     agents_dict = {1:agent1, 2:agent2, 3:agent3, 4:agent4}
-    mocker.patch('logic.sim.Simulation.get_agents_dict',return_value=agents_dict)
+    mocker.patch('logic.sim.Ethereum_Sim.get_agents_dict',return_value=agents_dict)
 
     #setting: there are two pools, one of them has two delegators and the other has one
     pool1=Pool(cost=0.001, pledge=0.1, owner=1, margin=0.1, reward_scheme=model.reward_scheme, pool_id=1)
@@ -188,7 +187,31 @@ def test_execute_strategy(mocker):
     assert model.pools[1].cost == 0.0008
     assert model.pools[1].stake == 0.151
 
-    
+    #new strategy for delegator, change stake
+    new_strategy3 =Strategy(stake_allocations={2:0.001},owned_pools=None)
+    agent3.new_strategy=new_strategy3
+    agent3.execute_strategy()
+
+    assert agent3.strategy==new_strategy3
+    assert agent3.new_strategy is None
+    assert model.pools[1].stake == 0.15
+    assert model.pools[2].stake == pytest.approx(0.051,0.001)
+
+    #new strategy for operator, close pool
+    new_strategy2=Strategy(stake_allocations={2:0.003}, owned_pools=None)
+    agent1.new_strategy=new_strategy2
+    agent1.execute_strategy()
+    #agent4.strategy.stake_allocations.pop(1)
+
+    agents_dict[4].strategy.stake_allocations.pop(pool1.id)
+
+    assert pool1.delegators=={ 4:0.05}
+    assert pool1.owner==1
+    assert list(pool1.delegators.keys())[0] ==4
+    #assert agent4.strategy.stake_allocations=={1:0.05}
+    #assert agent1.strategy==new_strategy2
+    #assert agent1.new_strategy is None
+
 
 
     

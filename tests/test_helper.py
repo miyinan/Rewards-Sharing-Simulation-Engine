@@ -99,35 +99,12 @@ def test_calculate_cost_per_pool():
     results_0 = [
         hlp.calculate_pool_reward(
             reward_scheme=reward_scheme,
-            pool_stake=stakes[i],
-            pool_pledge=pledges[i]
+            pool_stake=stakes[i]
         )
         for i in range(len(stakes))
     ]
 
-    reward_scheme_4 = rss.CurvePledgeBenefitRSS(k=10, a0=0.3, crossover_factor=8, curve_root=1)
-    results_4 = [
-        hlp.calculate_pool_reward(
-            reward_scheme=reward_scheme_4,
-            pool_stake=stakes[i],
-            pool_pledge=pledges[i]
-        )
-        for i in range(len(stakes))
-    ]
 
-    assert results_0 == results_4
-
-    reward_scheme_4_ = rss.CurvePledgeBenefitRSS(k=10, a0=0.3, crossover_factor=8, curve_root=3)
-    results_4_ = [
-        hlp.calculate_pool_reward(
-            reward_scheme=reward_scheme_4_,
-            pool_stake=stakes[i],
-            pool_pledge=pledges[i]
-        )
-        for i in range(len(stakes))
-    ]
-
-    assert results_0 != results_4_
 
 # not used in ethereum, don't need to rank
 '''
@@ -204,17 +181,18 @@ def test_write_read_seq_id():
 
 
 def test_find_target_pool():
-    reward_scheme = rss.Ethereum(alpha=0.001, beta=0.2)
-    target_stake = 0.14
+    model=Ethereum_Sim(alpha=0.1, beta=0.2)
+    reward_scheme = model.reward_scheme
+    model.total_stake=1
+    target_stake = 0.08
     pools = [
-        Pool(pool_id=i, cost=0.0001, pledge=0.001+0.00001*i, owner=i, reward_scheme=reward_scheme, margin=0)
+        Pool(pool_id=i, cost=0.0001, pledge=0.1+0.00001*i, owner=i, reward_scheme=reward_scheme, margin=0)
         for i in range(1, 150)
     ]
     pools.sort(key=hlp.pool_comparison_key)
-
     target_pool = hlp.find_target_pool(pools, target_stake, reward_scheme)
 
-    assert pools.index(target_pool) == 13
+    assert pools.index(target_pool) == 0
 
 
 def test_calculate_potential_profit():

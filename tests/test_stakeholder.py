@@ -202,7 +202,7 @@ def test_execute_strategy(mocker):
     assert agent1.new_strategy is None
     assert model.pools[1].margin == 0.2
     assert model.pools[1].stake == 0.0041
-# ------------------------------------------------------------------------13:34 stopped here
+
 
     # new strategy for delegator: delegate to other pool
     new_strategy3 = Strategy(stake_allocations={2: 0.001}, owned_pools=None)
@@ -216,6 +216,7 @@ def test_execute_strategy(mocker):
     assert 3 not in model.pools[1].delegators
     assert 3 in model.pools[2].delegators
 
+# ------------------------------------------------------------------------13:34 stopped here
     # new strategy for pool owner: close pool
     new_strategy1 = Strategy(stake_allocations={2: 0.003}, owned_pools=None)
     agent1.new_strategy = new_strategy1

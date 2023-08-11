@@ -3,6 +3,7 @@ import collections
 from gekko import GEKKO
 import numpy as np
 from math import fsum
+from collections import Counter
 
 import logic.helper as hlp
 
@@ -10,16 +11,20 @@ import logic.helper as hlp
 def get_number_of_pools(model):
     return len(model.pools)
 
-
+#also counting the number of pools of solo staking
 def get_avg_margin(model):
     pools = model.get_pools_list()
     margins = [pool.margin for pool in pools]
     return statistics.mean(margins) if len(margins) > 0 else 0
 
+def get_smart_contract_num(model):
+    pools = model.get_pools_list()
+    margins = [pool.margin for pool in pools if pool.margin != 0]
+    return dict(Counter(margins))
 
 def get_median_margin(model):
     pools = model.get_pools_list()
-    margins = [pool.margin for pool in pools]
+    margins = [pool.margin for pool in pools if pool.margin != 0]
     return statistics.median(margins) if len(margins) > 0 else 0
 
 
@@ -73,6 +78,8 @@ def get_avg_sat_rate(model):
     return statistics.mean(sat_rates)
 
 
+
+###------------ what is this one??
 def get_stakes_n_margins(model):
     agents = model.get_agents_dict()
     pools = model.get_pools_list()
@@ -85,6 +92,8 @@ def get_stakes_n_margins(model):
     }
 
 
+
+# -------------------------------------------------- current progress 23:12
 def get_controlled_stake_distr_stat_dist(model):
     """
     :param model:

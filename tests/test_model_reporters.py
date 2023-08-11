@@ -4,6 +4,7 @@ import logic.sim
 from logic.stakeholder_profiles import NonMyopicStakeholder
 from logic.pool import Pool
 from logic.model_reporters import *
+from logic.stakeholder_eth import EthStakeholder
 
 
 # Note: need to 'pip install pytest-mock' to run some of these tests
@@ -14,12 +15,12 @@ def test_get_number_of_pools():
 
 
 def test_get_controlled_stake_distr_stat_dist(mocker):
-    model = logic.sim.Simulation()
+    model = logic.sim.Ethereum_Sim()
 
     agents_dict = {
-        1: NonMyopicStakeholder(unique_id=1, model=model, stake=0.01, cost=0.001),
-        2: NonMyopicStakeholder(unique_id=2, model=model, stake=0.04, cost=0.001),
-        3: NonMyopicStakeholder(unique_id=3, model=model, stake=0.01, cost=0.001)
+        1: EthStakeholder(unique_id=1, model=model, stake=0.01, cost=0.001),
+        2: EthStakeholder(unique_id=2, model=model, stake=0.04, cost=0.001),
+        3: EthStakeholder(unique_id=3, model=model, stake=0.01, cost=0.001)
     }
 
     pool1 = Pool(owner=1, cost=0.001, pledge=0.01, margin=0.1, pool_id=555, reward_scheme=model.reward_scheme)
@@ -30,17 +31,18 @@ def test_get_controlled_stake_distr_stat_dist(mocker):
     pool3.stake = 0.05
     pools_list = [pool1, pool2, pool3]
 
-    mocker.patch('logic.sim.Simulation.get_agents_dict', return_value=agents_dict)
-    mocker.patch('logic.sim.Simulation.get_pools_list', return_value=pools_list)
-    mocker.patch('logic.sim.Simulation.has_converged', return_value=True)
+    mocker.patch('logic.sim.Ethereum_Sim.get_agents_dict', return_value=agents_dict)
+    mocker.patch('logic.sim.Ethereum_Sim.get_pools_list', return_value=pools_list)
+    mocker.patch('logic.sim.Ethereum_Sim.has_converged', return_value=True)
 
     stat_dist = get_controlled_stake_distr_stat_dist(model)
 
     assert pytest.approx(stat_dist) == 0.095  # use approximation because of floating point operation error
 
 
+##it's ok, not useful in Ethereum
 def test_get_min_aggregate_pledge(mocker):
-    model = logic.sim.Simulation()
+    model = logic.sim.Ethereum_Sim()
 
     pool1 = Pool(owner=1, cost=0.001, pledge=0.001, margin=0.1, pool_id=555, reward_scheme=model.reward_scheme)
     pool1.stake = 0.09
@@ -50,8 +52,8 @@ def test_get_min_aggregate_pledge(mocker):
     pool3.stake = 0.05
     pools_list = [pool1, pool2, pool3]
 
-    mocker.patch('logic.sim.Simulation.get_pools_list', return_value=pools_list)
-    mocker.patch('logic.sim.Simulation.has_converged', return_value=True)
+    mocker.patch('logic.sim.Ethereum_Sim.get_pools_list', return_value=pools_list)
+    mocker.patch('logic.sim.Ethereum_Sim.has_converged', return_value=True)
 
     min_aggr_pledge = get_min_aggregate_pledge(model)
 
@@ -66,7 +68,7 @@ def test_get_min_aggregate_pledge(mocker):
                 owner=i, cost=0.001, pledge=stake_per_pool, margin=0.1, pool_id=100 + i, reward_scheme=model.reward_scheme
             )
         )
-    mocker.patch('logic.sim.Simulation.get_pools_list', return_value=pools_list)
+    mocker.patch('logic.sim.Ethereum_Sim.get_pools_list', return_value=pools_list)
     min_aggr_pledge = get_min_aggregate_pledge(model)
     assert min_aggr_pledge == num_pools / 2 * stake_per_pool
 

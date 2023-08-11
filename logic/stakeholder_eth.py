@@ -202,10 +202,10 @@ class EthStakeholder(Agent):
     def close_pool(self, pool_id):
         pools = self.model.pools
         pool = pools[pool_id]
-        # remove from ranking list
-        self.model.pool_rankings.remove(pool)
         # Undelegate delegators' stake
         self.remove_delegations(pool)
+        # remove from ranking list
+        self.model.pool_rankings.remove(pool)
         pools.pop(pool_id)
 
     def remove_delegations(self, pool):
@@ -237,24 +237,29 @@ class EthStakeholder(Agent):
         current_pools = self.model.pools
         old_allocations = self.strategy.stake_allocations
         new_allocations = self.new_strategy.stake_allocations
+
+        #for old_allocations and new_allocation overlaps, clear delegation
         for pool_id in old_allocations.keys() - new_allocations.keys():
             pool = current_pools[pool_id]
             if pool is not None:
                 # remove delegation
-                self.model.pool_rankings_myopic.remove(pool)
+                self.model.pool_rankings.remove(pool)
                 pool.update_delegation(new_delegation=0, delegator_id=self.unique_id)
-                self.model.pool_rankings_myopic.add(pool)
+                self.model.pool_rankings.add(pool)
+        #update new delegation
         for pool_id in new_allocations.keys():
             pool = current_pools[pool_id]
-            if pool is not None:
+            if pool is not None: 
                 # add / modify delegation
-                self.model.pool_rankings_myopic.remove(pool)
+                self.model.pool_rankings.remove(pool)
                 pool.update_delegation(new_delegation=new_allocations[pool_id], delegator_id=self.unique_id)
-                self.model.pool_rankings_myopic.add(pool)
+                self.model.pool_rankings.add(pool)
 
+        
+        # operation moves
         old_owned_pools = set(self.strategy.owned_pools.keys())
         new_owned_pools = set(self.new_strategy.owned_pools.keys())
-
+        # closed some pools hat are not in new stategy
         for pool_id in old_owned_pools - new_owned_pools:
             # pools have closed
             self.close_pool(pool_id)
@@ -302,7 +307,7 @@ class EthStakeholder(Agent):
 
         for pool_id,allocation in self.strategy.stake_allocations.items():
             pool = all_pools_dict[pool_id]
-            self.model.pool_rankings_myopic.remove(pool)
+            self.model.pool_rankings.remove(pool)
             pool.update_delegation(new_delegation=allocation, delegator_id=self.unique_id)
             self.model.pool_rankings_myopic.add(pool)
 
