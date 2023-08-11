@@ -2,8 +2,8 @@ import random
 
 import pytest
 import logic.helper as hlp
-import logic.reward_schemes as rss
-from logic.sim import Simulation
+from logic.reward_schemes import Ethereum
+from logic.sim import Ethereum_Sim
 
 from logic.pool import Pool
 
@@ -31,8 +31,8 @@ def test_generate_stake_distr_flat():
 
 def test_calculate_pool_reward_variable_stake():
     # GIVEN
-    model = Simulation(n=1000,beta=0.2,alpha=0.1)
-    reward_scheme = rss.Ethereum(model=model,alpha=0.1, beta=0.2)
+    model = Ethereum_Sim(n=100,beta=0.2,alpha=0.1)
+    reward_scheme = Ethereum(model=model,alpha=0.1, beta=0.2)
     pool_stake = [0.01,0.1,0.2,0.4]
     model.total_stake=1
 
@@ -79,6 +79,8 @@ def test_calculate_ranks_with_tie_breaking():
 
 
 def test_calculate_cost_per_pool():
+    model = Ethereum_Sim(n=100,beta=0.2,alpha=0.1)
+    reward_scheme=Ethereum(model=model,alpha=0.1, beta=0.2)
     num_pools = 4
     initial_cost = 1
     extra_pool_cost_fraction = 0.6
@@ -90,13 +92,13 @@ def test_calculate_cost_per_pool():
     assert cost_per_pool == expected_cost_per_pool
     assert cost_per_pool * num_pools == expected_total_cost
     # results of options 0 and 4 must be the same when curve_root = 1
-    reward_scheme_0 = rss.CardanoRSS(k=10, a0=0.3)
+    
     stakes = [0.01, 0.1, 0.2]
     pledges = [0.001, 0.0069, 0.012]
 
     results_0 = [
         hlp.calculate_pool_reward(
-            reward_scheme=reward_scheme_0,
+            reward_scheme=reward_scheme,
             pool_stake=stakes[i],
             pool_pledge=pledges[i]
         )
@@ -216,13 +218,29 @@ def test_find_target_pool():
 
 
 def test_calculate_potential_profit():
-    reward_scheme = rss.Ethereum(alpha=0.001, beta=0.2)
-    pool = Pool(pool_id=1, cost=0.0001, pledge=0.001, owner=1, reward_scheme=reward_scheme, margin=0)
+    model=Ethereum_Sim(alpha=0.1, beta=0.2)
+    reward_scheme = Ethereum(model,alpha=0.1, beta=0.2)
+
+    #private_pool
+    pool = Pool(pool_id=1, cost=0.001, pledge=0.1, owner=1, reward_scheme=reward_scheme, margin=0,is_private=True)
     total_stake = 0.1
-    potential_profit = hlp.calculate_potential_profit(reward_scheme,pool.stake,total_stake,False)
+    potential_profit = hlp.calculate_potential_profit(reward_scheme,pool.stake,total_stake,is_private=pool.is_private)
 
-    assert potential_profit == 0.0001
+    assert potential_profit == 0
     
-
-
+def test_calculate_operator_utility_from_pool():
+    model=Ethereum_Sim(alpha=0.1, beta=0.2)
+    model.total_stake=1
+    reward_scheme = Ethereum(model=model,alpha=0.1, beta=0.2)
     
+    pool = Pool(pool_id=1, cost=0.001, pledge=0.05, owner=1, reward_scheme=reward_scheme, margin=0.1)
+    pool.stake = 0.15
+    r=reward_scheme.calculate_pool_reward(pool_stake=pool.stake)
+    operator_utility = hlp.calculate_operator_utility_from_pool(pool_stake=pool.stake, pledge=pool.pledge, margin=pool.margin, cost=pool.cost, reward_scheme=reward_scheme)
+
+    assert model.total_stake==1
+    assert reward_scheme.alpha==0.1
+    assert reward_scheme.beta==0.2
+    assert reward_scheme.total_stake==1
+    assert r==0.15
+    assert operator_utility == pytest.approx(0.059,0.0001)

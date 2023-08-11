@@ -13,7 +13,7 @@ import seaborn as sns
 import argparse
 
 from logic.stakeholder_profiles import PROFILE_MAPPING
-from logic.reward_schemes import RSS_MAPPING
+from logic.reward_schemes import Ethereum
 from logic.model_reporters import REPORTER_IDS
 from logic.reward_schemes import TOTAL_EPOCH_REWARDS_R
 
@@ -170,28 +170,23 @@ def calculate_potential_profit(reward_scheme, stake,total_stake,is_private):
     if is_private:
         return 0
     beta_stake_reward = calculate_pool_reward(
-        reward_scheme=reward_scheme, pool_stake=reward_scheme.beta(), total_stake=total_stake
+        reward_scheme=reward_scheme, pool_stake=reward_scheme.beta
     )
     current_stake_reward = calculate_pool_reward(
-        reward_scheme=reward_scheme, pool_stake=stake, total_stake=total_stake
+        reward_scheme=reward_scheme, pool_stake=stake
     )
     return beta_stake_reward - current_stake_reward
-
-
-def get_total_stake():
-    return model.total_stake
-
 
 
 
 # @lru_cache(maxsize=1024)
 def calculate_current_profit(reward_scheme, stake):
-    reward = calculate_pool_reward(reward_scheme=reward_scheme, pool_stake=stake, total_stake=get_total_stake())
+    reward = calculate_pool_reward(reward_scheme=reward_scheme, pool_stake=stake, total_stake=reward_scheme.total_stake)
     return reward
 
 
-def calculate_pool_reward(reward_scheme, pool_stake, total_stake):
-    return reward_scheme.calculate_pool_reward(pool_stake=pool_stake, total_stake=total_stake)
+def calculate_pool_reward(reward_scheme, pool_stake):
+    return reward_scheme.calculate_pool_reward(pool_stake=pool_stake)
 
 @lru_cache(maxsize=1024)
 def calculate_delegator_reward_from_pool(pool_margin, pool_reward, delegator_stake_fraction):
@@ -302,16 +297,16 @@ def calculate_myopic_pool_desirability(margin, current_profit, is_private):
 
 # @lru_cache(maxsize=1024)
 def calculate_operator_utility_from_pool(pool_stake, pledge, margin, cost, reward_scheme):
-    r = calculate_pool_reward(reward_scheme=reward_scheme, pool_stake=pool_stake, total_stake=get_total_stake())
+    r = calculate_pool_reward(reward_scheme=reward_scheme, pool_stake=pool_stake)
     stake_fraction = pledge / pool_stake
-    return calculate_operator_reward_from_pool(pool_margin=margin, pool_cost=cost, pool_reward=r,
-                                               operator_stake_fraction=stake_fraction)
-
+    r_from_pledge=r*stake_fraction
+    commission_r= r*(1-stake_fraction)*margin
+    return r_from_pledge+commission_r-cost
 
 
 # @lru_cache(maxsize=1024)
 def calculate_delegator_utility_from_pool(stake_allocation, pool_stake, margin, cost, reward_scheme):
-    r = calculate_pool_reward(reward_scheme=reward_scheme, pool_stake=pool_stake, total_stake=get_total_stake())
+    r = calculate_pool_reward(reward_scheme=reward_scheme, pool_stake=pool_stake)
     stake_fraction = stake_allocation / pool_stake
     return calculate_delegator_reward_from_pool(pool_margin=margin, pool_cost=cost, pool_reward=r,
                                                 delegator_stake_fraction=stake_fraction)

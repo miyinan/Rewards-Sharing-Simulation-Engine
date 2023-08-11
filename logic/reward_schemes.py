@@ -18,14 +18,10 @@ class Ethereum():
         return self.saturation_threshold
 
     def calculate_pool_reward(self, pool_stake):
-        stake_ = min(pool_stake, self.saturation_threshold)
-        r=0
-        if stake_ >= self.alpha:
-            r = TOTAL_EPOCH_REWARDS_R/self.total_stake * stake_
+        r = 0
+        if self.beta >= pool_stake >= self.alpha:
+            r = TOTAL_EPOCH_REWARDS_R * pool_stake/self.total_stake
+        elif pool_stake > self.beta:
+            r = TOTAL_EPOCH_REWARDS_R * self.saturation_threshold/self.total_stake
         return r
-
-
-RSS_MAPPING ={
-    0: Ethereum
-}
 

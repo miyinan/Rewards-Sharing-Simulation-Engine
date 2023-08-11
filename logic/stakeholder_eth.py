@@ -23,6 +23,7 @@ class EthStakeholder(Agent):
             strategy = Strategy()
         self.strategy = strategy
         self.reward_scheme = self.model.reward_scheme
+        self.ranking=self.model.pool_rankings
         
 
     def step(self):
@@ -120,10 +121,11 @@ class EthStakeholder(Agent):
         )
 
     def calculate_operator_utility_from_strategy(self,strategy):
-        potential_pools = strategy.own_pools.values()
+        potential_pools = strategy.owned_pools.values()
         utility = 0
+        pool_utility = 0
         for pool in potential_pools:
-            pool_utility += hlp.calculate_operator_utility_from_pool(
+            pool_utility = hlp.calculate_operator_utility_from_pool(
                 pool_stake=pool.stake,
                 pledge=pool.pledge,
                 margin=pool.margin,
@@ -195,14 +197,13 @@ class EthStakeholder(Agent):
         self.model.pools[pool_id] = pool
         # include in pool rankings
         self.model.pool_rankings.add(pool)
-        self.model.pool_rankings_myopic.add(pool)
+        
 
     def close_pool(self, pool_id):
         pools = self.model.pools
         pool = pools[pool_id]
-        # remove from top k desirabilities
+        # remove from ranking list
         self.model.pool_rankings.remove(pool)
-        self.model.pool_rankings_myopic.remove(pool)
         # Undelegate delegators' stake
         self.remove_delegations(pool)
         pools.pop(pool_id)
@@ -215,11 +216,13 @@ class EthStakeholder(Agent):
             agent.strategy.stake_allocations.pop(pool.id)
             pool.update_delegation(new_delegation=0, delegator_id=agent_id)
 
+    '''
         # Also remove pool from agents' upcoming moves in case of (semi)simultaneous activation
         if "simultaneous" in self.model.agent_activation_order.lower():
             for agent in agents.values():
                 if agent.new_strategy is not None:
                     agent.new_strategy.stake_allocations.pop(pool.id, None)
+    '''
 
     def get_status(self):  # todo update to sth more meaningful
         print("Agent id: {}, stake: {}, cost:{}"
@@ -271,8 +274,8 @@ class EthStakeholder(Agent):
         all_pools_dict = self.model.pools
         eligible_pools_ranked = [
             pool
-            for pool in self.rankings
-            if pool is not None and pool.owner != self.unique_id and not pool.is_private
+            for pool in self.ranking
+            if pool is not None and pool.owner != self.unique_id and not pool.is_private and pool.margin > 0
         ]
 
         if len(eligible_pools_ranked) == 0:
@@ -286,25 +289,45 @@ class EthStakeholder(Agent):
             self.model.pool_rankings_myopic.add(pool)
 
         allocations = dict()
-        best_saturation_pool = None
+        #best_saturation_pool = None
         while len(eligible_pools_ranked) > 0 :
             #first attempt to saturate pools
             best_pool = eligible_pools_ranked.pop(0)
             stake_to_saturation = self.reward_scheme.saturation_threshold - best_pool.stake
-            if stake_to_saturation < hlp.MIN_STAKE_UNIT:
-                if best_saturation_pool is None:
-                    best_saturation_pool = best_pool
-                continue
-            allocations[best_pool.id] = min(stake_to_saturation, stake_to_delegate)
-            stake_to_delegate -= allocations
-            if stake_to_delegate < hlp.MIN_STAKE_UNIT:
-                break
-        if stake_to_delegate > hlp.MIN_STAKE_UNIT and best_saturation_pool is not None:
-            allocations[best_saturation_pool.id] = stake_to_delegate
+            if stake_to_saturation > hlp.MIN_STAKE_UNIT:
+                allocations[best_pool.id] = min(stake_to_saturation, stake_to_delegate)
+                stake_to_delegate -= allocations[best_pool.id]
+                if stake_to_delegate < hlp.MIN_STAKE_UNIT:
+                    break
 
         for pool_id,allocation in self.strategy.stake_allocations.items():
             pool = all_pools_dict[pool_id]
             self.model.pool_rankings_myopic.remove(pool)
             pool.update_delegation(new_delegation=allocation, delegator_id=self.unique_id)
             self.model.pool_rankings_myopic.add(pool)
+
+        if allocations.keys()==[]:
+            return None
         return allocations
+    
+
+    def find_delegation_move(self, stake_to_delegate=None):
+        if stake_to_delegate is None:
+            stake_to_delegate = self.stake
+        if stake_to_delegate < hlp.MIN_STAKE_UNIT:
+            return Strategy()
+
+        allocations = self.determine_stake_allocations(stake_to_delegate)
+        return Strategy(stake_allocations=allocations)
+    
+    def update_pool(self, pool_id):
+        updated_pool = self.new_strategy.owned_pools[pool_id]
+        if updated_pool.is_private and updated_pool.stake > updated_pool.pledge:
+            # undelegate stake in case the pool turned from public to private
+            self.remove_delegations(updated_pool)
+        self.model.pools[pool_id] = updated_pool
+        # update pool rankings
+        old_pool = self.strategy.owned_pools[pool_id]
+        self.model.pool_rankings.remove(old_pool)
+        self.model.pool_rankings.add(updated_pool)
+        return updated_pool

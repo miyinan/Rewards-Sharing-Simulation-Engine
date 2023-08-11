@@ -281,7 +281,7 @@ def get_pool_splitter_count(model):
 def get_cost_efficient_count(model):
     all_agents = model.get_agents_list()
     potential_profits = [
-        hlp.calculate_potential_profit(reward_scheme=model.reward_scheme, pledge=agent.stake, cost=agent.cost)
+        hlp.calculate_potential_profit(reward_scheme=model.reward_scheme, stake=agent.stake, cost=agent.cost)
         for agent in all_agents
     ]
     positive_potential_profits = [pp for pp in potential_profits if pp > 0]

@@ -3,7 +3,7 @@ import logic.helper as hlp
 
 
 class Pool:
-    def __init__(self, pool_id, cost, pledge, owner, reward_scheme, margin=0, is_private=False):
+    def __init__(self, pool_id, cost, pledge,owner, reward_scheme, margin=0, is_private=False):
         self.id = pool_id
         self.cost = cost
         self.pledge = pledge
@@ -25,7 +25,7 @@ class Pool:
         self.set_desirability()
 
     def set_profit(self, reward_scheme):
-        self.potential_profit = hlp.calculate_potential_profit(reward_scheme=reward_scheme, stake=self.stake, is_private=self.is_private)
+        self.potential_profit = hlp.calculate_potential_profit(reward_scheme=reward_scheme, stake=self.stake, total_stake=reward_scheme.total_stake, is_private=self.is_private)
 
     def set_desirability(self):
         self.desirability = hlp.calculate_pool_desirability(margin=self.margin, potential_profit=self.potential_profit,is_private=self.is_private)
