@@ -568,11 +568,11 @@ def add_script_arguments(parser):
     """
     parser.add_argument('--n', nargs="?", type=positive_int, default=1000,
                         help='The number of agents (natural number). Default is 1000.')
-    parser.add_argument('--k', nargs="+", type=positive_int, default=100,
-                        help='The k value of the system (natural number). Default is 100.')
-    parser.add_argument('--a0', nargs="+", type=non_negative_float, default=0.3,
-                        help='The a0 value of the system (decimal number between 0 and 1). Default is 0.3')
-    parser.add_argument('--reward_scheme', nargs="?", type=int, default=0, choices=range(len(RSS_MAPPING)),
+    parser.add_argument('--beta', nargs="+", type=positive_int, default=100,
+                        help='The maximum effective balance of ethereum staking')
+    parser.add_argument('--alpha', nargs="+", type=non_negative_float, default=0.3,
+                        help='The minimum effective balance of ethereum staking')
+    parser.add_argument('--reward_scheme', nargs="?", type=int, default="Ethereum_Sim",
                         # todo maybe allow multiple args to enable changing the reward scheme of the system during runtime
                         help='The reward scheme to use in the simulation. 0 for the original reward scheme of Cardano, '
                              '1 for a simplified version of it, 2 for a reward scheme with flat pledge benefit, 3 for '
@@ -587,7 +587,7 @@ def add_script_arguments(parser):
     parser.add_argument('--extra_pool_cost_fraction', nargs="?", type=non_negative_float, default=0.4,
                         help='The factor that determines how much an additional pool costs as a fraction of '
                              'the original cost value of the stakeholder. Default is 40%%.')
-    parser.add_argument('--agent_activation_order', nargs="?", type=str.lower, default='random',
+    parser.add_argument('--agent_activation_order', nargs="?", type=str.lower, default='semisimulaneous',
                         choices=['random', 'sequential', 'simultaneous', 'semisimultaneous'],
                         help='The order with which agents are activated. Default is "Random". Other options are '
                              '"Sequential" and "Semisimultaneous".')

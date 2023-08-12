@@ -17,10 +17,12 @@ def get_avg_margin(model):
     margins = [pool.margin for pool in pools]
     return statistics.mean(margins) if len(margins) > 0 else 0
 
-def get_smart_contract_num(model):
+#count smart contracts used frequency
+def get_contract_type(model):
     pools = model.get_pools_list()
     margins = [pool.margin for pool in pools if pool.margin != 0]
     return dict(Counter(margins))
+
 
 def get_median_margin(model):
     pools = model.get_pools_list()
@@ -28,6 +30,7 @@ def get_median_margin(model):
     return statistics.median(margins) if len(margins) > 0 else 0
 
 
+# with solo staking
 def get_avg_pledge(model):
     current_pool_pledges = [pool.pledge for pool in model.get_pools_list()]
     return statistics.mean(current_pool_pledges) if len(current_pool_pledges) > 0 else 0
@@ -37,7 +40,7 @@ def get_total_pledge(model):
     current_pool_pledges = [pool.pledge for pool in model.get_pools_list()]
     return fsum(current_pool_pledges)
 
-
+# with solo staking inside
 def get_median_pledge(model):
     current_pool_pledges = [pool.pledge for pool in model.get_pools_list()]
     return statistics.median(current_pool_pledges) if len(current_pool_pledges) > 0 else 0
@@ -70,13 +73,14 @@ def get_median_pools_per_operator(model):
     return statistics.median(sorted_frequencies)
 
 
+'''
 def get_avg_sat_rate(model):
     current_pools = model.get_pools_list()
     if len(current_pools) == 0:
         return 0
     sat_rates = [pool.stake / model.reward_scheme.get_pool_saturation_threshold(pool.pledge) for pool in current_pools]
     return statistics.mean(sat_rates)
-
+'''
 
 
 ###------------ what is this one??
@@ -93,7 +97,7 @@ def get_stakes_n_margins(model):
 
 
 
-# -------------------------------------------------- current progress 23:12
+
 def get_controlled_stake_distr_stat_dist(model):
     """
     :param model:
@@ -123,7 +127,7 @@ def get_controlled_stake_distr_stat_dist(model):
     ]
     return sum(abs_diff) / 2
 
-
+# -------------------------------------------------- current progress 23:12
 def get_nakamoto_coefficient(model):
     """
     The Nakamoto coefficient is defined as the minimum number of entities that control more than 50% of the system
@@ -166,6 +170,7 @@ def get_nakamoto_coefficient(model):
     majority_threshold = total_active_stake / 2
     nc = np.argmax(cumulative_final_stake > majority_threshold) + 1
     return nc
+
 
 
 # note that this reporter cannot be used with multiprocessing (i.e. with the way batch-run currently works)
@@ -335,7 +340,7 @@ def get_gini_id_coeff_pool_count(model):
     pools_per_agent = np.fromiter(pools_owned.values(), dtype=int)
     return gini_coefficient(pools_per_agent)
 
-
+'''
 def get_gini_id_coeff_pool_count_k_agents(model):
     # use at least k agents (if there aren't k pool operators, pad with non-pool operators)
     pools = model.get_pools_list()
@@ -347,7 +352,7 @@ def get_gini_id_coeff_pool_count_k_agents(model):
         missing_values = model.reward_scheme.k - pools_per_agent.size
         pools_per_agent = np.append(pools_per_agent, np.zeros(missing_values, dtype=int))
     return gini_coefficient(pools_per_agent)
-
+'''
 
 def get_gini_id_coeff_stake(model):
     pools = model.get_pools_list()
@@ -400,6 +405,7 @@ def get_total_stake(model):
 
 
 ALL_MODEL_REPORTEERS = {
+    "Contract type": get_contract_type,
     "Pool count": get_number_of_pools,
     "Total pledge": get_total_pledge,
     "Mean pledge": get_avg_pledge,
@@ -407,7 +413,6 @@ ALL_MODEL_REPORTEERS = {
     "Average pools per operator": get_avg_pools_per_operator,
     "Max pools per operator": get_max_pools_per_operator,
     "Median pools per operator": get_median_pools_per_operator,
-    "Average saturation rate": get_avg_sat_rate,
     "Nakamoto coefficient": get_nakamoto_coefficient,
     "Statistical distance": get_controlled_stake_distr_stat_dist,
     "Min-aggregate pledge": get_min_aggregate_pledge,
@@ -422,7 +427,6 @@ ALL_MODEL_REPORTEERS = {
     "Cost efficient stakeholders": get_cost_efficient_count,
     "Gini-id": get_gini_id_coeff_pool_count,
     "Gini-id stake": get_gini_id_coeff_stake,
-    "Gini-id (k)": get_gini_id_coeff_pool_count_k_agents,
     "Gini-id stake (k)": get_gini_id_coeff_stake_k_agents,
     "Mean margin": get_avg_margin,
     "Median margin": get_median_margin,
@@ -436,14 +440,14 @@ ALL_MODEL_REPORTEERS = {
 }
 
 REPORTER_IDS = {
-    1: "Pool count",
-    2: "Total pledge",
-    3: "Mean pledge",
-    4: "Median pledge",
-    5: "Average pools per operator",
-    6: "Max pools per operator",
-    7: "Median pools per operator",
-    8: "Average saturation rate",
+    1: "Contract type",
+    2: "Pool count",
+    3: "Total pledge",
+    4: "Mean pledge",
+    5: "Median pledge",
+    6: "Average pools per operator",
+    7: "Max pools per operator",
+    8: "Median pools per operator",
     9: "Nakamoto coefficient",
     10: "Statistical distance",
     11: "Min-aggregate pledge",
@@ -456,15 +460,17 @@ REPORTER_IDS = {
     18: "Median cost rank",
     19: "Number of pool splitters",
     20: "Cost efficient stakeholders",
-    21: "StakePairs",
-    22: "Gini-id",
-    23: "Gini-id stake",
+    21: "Gini-id",
+    22: "Gini-id stake",
+    23: "Gini-id stake (k)",
     24: "Mean margin",
     25: "Median margin",
     26: "Stake per agent",
     27: "Stake per agent id",
-    28: "Total delegated stake",
-    29: "Total agent stake",
-    30: "Operator count",
-    31: "Total stake"
+    28: "StakePairs",
+    29: "Total delegated stake",
+    30: "Total agent stake",
+    31: "Operator count",
+    32: "Total stake"
 }
+

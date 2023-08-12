@@ -188,30 +188,38 @@ def test_execute_strategy(mocker):
     assert model.pools[1].stake == 0.151
 
     #new strategy for delegator, change stake
-    new_strategy3 =Strategy(stake_allocations={2:0.001},owned_pools=None)
-    agent3.new_strategy=new_strategy3
+    new_strategy2 =Strategy(stake_allocations={2:0.001},owned_pools=None)
+    agent3.new_strategy=new_strategy2
     agent3.execute_strategy()
 
-    assert agent3.strategy==new_strategy3
+    assert agent3.strategy==new_strategy2
     assert agent3.new_strategy is None
     assert model.pools[1].stake == 0.15
     assert model.pools[2].stake == pytest.approx(0.051,0.001)
 
     #new strategy for operator, close pool
-    new_strategy2=Strategy(stake_allocations={2:0.003}, owned_pools=None)
-    agent1.new_strategy=new_strategy2
+    new_strategy3=Strategy(stake_allocations={2:0.003}, owned_pools=None)
+    agent1.new_strategy=new_strategy3
     agent1.execute_strategy()
     #agent4.strategy.stake_allocations.pop(1)
 
-    agents_dict[4].strategy.stake_allocations.pop(pool1.id)
-
-    assert pool1.delegators=={ 4:0.05}
-    assert pool1.owner==1
-    assert list(pool1.delegators.keys())[0] ==4
+    assert pool1.delegators=={}
+    assert list(pool1.delegators.keys())==[]
     #assert agent4.strategy.stake_allocations=={1:0.05}
     #assert agent1.strategy==new_strategy2
     #assert agent1.new_strategy is None
 
+    #---------- new strategy for opening a pool
+    pool3 = Pool(cost=0.001, pledge=0.05, owner=3, margin=0.1, reward_scheme=model.reward_scheme, pool_id=3)
+    new_strategy4 = Strategy(stake_allocations=None, owned_pools={3:pool3})
+    agent3.new_strategy = new_strategy4
 
+    agent3.execute_strategy()
+
+    assert agent3.strategy == new_strategy4
+    assert agent3.new_strategy is None
+    assert model.pools[3].stake == 0.05
+    assert 3 not in model.pools[3].delegators
+    assert 3 not in model.pools[2].delegators
 
     

@@ -39,7 +39,7 @@ def test_get_controlled_stake_distr_stat_dist(mocker):
 
     assert pytest.approx(stat_dist) == 0.095  # use approximation because of floating point operation error
 
-
+'''
 ##it's ok, not useful in Ethereum
 def test_get_min_aggregate_pledge(mocker):
     model = logic.sim.Ethereum_Sim()
@@ -71,10 +71,10 @@ def test_get_min_aggregate_pledge(mocker):
     mocker.patch('logic.sim.Ethereum_Sim.get_pools_list', return_value=pools_list)
     min_aggr_pledge = get_min_aggregate_pledge(model)
     assert min_aggr_pledge == num_pools / 2 * stake_per_pool
-
+'''
 
 def test_get_pool_splitter_count(mocker):
-    model = logic.sim.Simulation()
+    model = logic.sim.Ethereum_Sim()
 
     pools_list = [
         Pool(owner=i, cost=0.001, pledge=0.001, margin=0.1, pool_id=555, reward_scheme=model.reward_scheme)
@@ -87,7 +87,7 @@ def test_get_pool_splitter_count(mocker):
     pools_list.append(
         Pool(owner=5, cost=0.001, pledge=0.01, margin=0.1, pool_id=556, reward_scheme=model.reward_scheme))
 
-    mocker.patch('logic.sim.Simulation.get_pools_list', return_value=pools_list)
+    mocker.patch('logic.sim.Ethereum_Sim.get_pools_list', return_value=pools_list)
 
     pool_splitter_count = get_pool_splitter_count(model)
     assert pool_splitter_count == 2
@@ -119,7 +119,7 @@ def test_gini_coefficient():
 
 
 def test_get_gini_id_coeff_pool_count():
-    model = logic.sim.Simulation()
+    model = logic.sim.Ethereum_Sim()
 
     pools = {}
     pools_1 = [
@@ -137,8 +137,7 @@ def test_get_gini_id_coeff_pool_count():
 
 
 def test_get_gini_id_coeff_stake():
-    model = logic.sim.Simulation()
-
+    model = logic.sim.Ethereum_Sim()
     pools = {}
     pools_1 = [
         Pool(owner=1, cost=0.001, pledge=0.01, margin=0.1, pool_id=i, reward_scheme=model.reward_scheme)
@@ -153,9 +152,9 @@ def test_get_gini_id_coeff_stake():
     g = get_gini_id_coeff_stake(model)
     assert round(g, 3) == 0.145
 
-
+'''
 def test_get_gini_id_coeff_pool_count_k_agents():
-    model = logic.sim.Simulation(k=5)
+    model = logic.sim.Ethereum_Sim()
     pools = {}
     pools_1 = [
         Pool(owner=1, cost=0.001, pledge=0.01, margin=0.1, pool_id=i, reward_scheme=model.reward_scheme)
@@ -168,10 +167,9 @@ def test_get_gini_id_coeff_pool_count_k_agents():
 
     g = get_gini_id_coeff_pool_count_k_agents(model)
     assert round(g, 3) == 0.56
-
-
+'''
 def test_get_nakamoto_coefficient():
-    model = logic.sim.Simulation()
+    model = logic.sim.Ethereum_Sim()
     pools = {}
     pools_1 = [
         Pool(owner=1, cost=0.001, pledge=0.01, margin=0.1, pool_id=i, reward_scheme=model.reward_scheme)
@@ -199,7 +197,7 @@ def test_get_nakamoto_coefficient():
 
 
 def test_get_nakamoto_coefficient_total_stake_1():
-    model = logic.sim.Simulation(n=1000)
+    model = logic.sim.Ethereum_Sim(n=1000)
     pools = {}
     for i in range(300):
         pools[i] = Pool(owner=i, cost=0.001, pledge=0.001, margin=0.1, pool_id=i, reward_scheme=model.reward_scheme)
@@ -212,15 +210,15 @@ def test_get_nakamoto_coefficient_total_stake_1():
 
 
 def test_get_median_stk_rnk(mocker):
-    model = logic.sim.Simulation()
+    model = logic.sim.Ethereum_Sim()
     agents = {x: NonMyopicStakeholder(unique_id=x, model=model, stake=x, cost=0.001) for x in range(1, 101)}
-    mocker.patch('logic.sim.Simulation.get_agents_dict', return_value=agents)
+    mocker.patch('logic.sim.Ethereum_Sim.get_agents_dict', return_value=agents)
     pools = []
     for i in range(3):
         pools.append(Pool(owner=100, cost=0.001, pledge=0.001, margin=0.1, pool_id=i, reward_scheme=model.reward_scheme))
     pools.append(Pool(owner=1, cost=0.001, pledge=0.001, margin=0.1, pool_id=3, reward_scheme=model.reward_scheme))
     pools.append(Pool(owner=2, cost=0.001, pledge=0.001, margin=0.1, pool_id=4, reward_scheme=model.reward_scheme))
-    mocker.patch('logic.sim.Simulation.get_pools_list', return_value=pools)
+    mocker.patch('logic.sim.Ethereum_Sim.get_pools_list', return_value=pools)
 
     median_stk_rank = get_median_stk_rnk(model)
 

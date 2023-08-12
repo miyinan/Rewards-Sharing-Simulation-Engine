@@ -203,9 +203,9 @@ class EthStakeholder(Agent):
         pools = self.model.pools
         pool = pools[pool_id]
         # Undelegate delegators' stake
-        self.remove_delegations(pool)
         # remove from ranking list
         self.model.pool_rankings.remove(pool)
+        self.remove_delegations(pool)
         pools.pop(pool_id)
 
     def remove_delegations(self, pool):

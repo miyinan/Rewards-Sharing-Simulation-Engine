@@ -11,7 +11,7 @@ def main():
     hlp.add_script_arguments(parser)
     args = parser.parse_args()
 
-    sim = simulation.Simulation(
+    sim = simulation.Ethereum_Sim(
         n=args.n,
         beta=args.beta,
         alpha=args.alpha,
