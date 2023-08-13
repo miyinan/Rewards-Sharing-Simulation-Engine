@@ -14,7 +14,7 @@ from logic.activations import SemiSimultaneousActivation
 import logic.helper as hlp
 import logic.model_reporters as reporters
 from logic.stakeholder_eth import EthStakeholder
-import logic.reward_schemes as rss
+from logic.reward_schemes import Ethereum
 import logic.liquid_contract as lc
 
 
@@ -465,10 +465,10 @@ class Simulation(Model):
 
 class Ethereum_Sim(Model):
     def __init__(
-            self,n=100,beta=0.001,alpha=0.0008,stake_distr_source='Pareto', agent_profile_distr=None, 
+            self,n=100,beta=0.001,alpha=0.00008,stake_distr_source='Pareto', agent_profile_distr=None, 
             inactive_stake_fraction=0, inactive_stake_fraction_known=False, relative_utility_threshold=0,
-            absolute_utility_threshold=0, seed=None, pareto_param=2.0, max_iterations=1000, cost_min=1e-5,
-            cost_max=1e-4, extra_pool_cost_fraction=0.4, agent_activation_order="random",
+            absolute_utility_threshold=0, seed=None, pareto_param=2.0, max_iterations=1000, cost_min=0,
+            cost_max=1e-4, extra_pool_cost_fraction=0.4, agent_activation_order="semisimultaneous",
             iterations_after_convergence=10, reward_scheme=0, execution_id='', seq_id=-1, parent_dir='',
             metrics=None, generate_graphs=True, input_from_file=False):
         args={}
@@ -515,13 +515,15 @@ class Ethereum_Sim(Model):
         self.beta = args['beta']
         self.alpha = args['alpha']
         self.n= args['n']
-        self.reward_scheme = rss.Ethereum(model=self, beta=self.beta, alpha=self.alpha)
+        self.reward_scheme = Ethereum(model=self, beta=self.beta, alpha=self.alpha)
 
         self.total_phases = total_phases
         self.multi_phase_params = {}
+        self.max_iterations = args['max_iterations']
 
         self.running = True  # for batch running and visualisation purposes
         self.schedule = SemiSimultaneousActivation(self)
+        self.agent_activation_order = 'semisimultaneous'
 
 
         # Initialize ranking of the systems pools
@@ -550,6 +552,7 @@ class Ethereum_Sim(Model):
         self.start_time = time.time()
         self.equilibrium_steps = []
         self.pivot_steps = []
+        self.generate_graphs = args['generate_graphs']
 
 
         
@@ -689,8 +692,7 @@ class Ethereum_Sim(Model):
         decimals = 15
         row_list.extend([
             [agent_id, round(agents[agent_id].stake, decimals), round(agents[agent_id].cost, decimals),
-             round(hlp.calculate_potential_profit(reward_scheme=self.reward_scheme, pledge=agents[agent_id].stake,
-                                                  cost=agents[agent_id].cost), decimals),
+             round(hlp.calculate_potential_profit(reward_scheme=self.reward_scheme, stake=agents[agent_id].stake, is_private = None), decimals),
              "Abstainer" if agents[agent_id].strategy is None else "Operator" if len(
                  agents[agent_id].strategy.owned_pools) > 0 else "Delegator",
              0 if agents[agent_id].strategy is None else len(agents[agent_id].strategy.owned_pools),
@@ -847,4 +849,17 @@ class Ethereum_Sim(Model):
         myopic_desirability = hlp.calculate_myopic_pool_desirability(pool.margin, current_profit)
         return -myopic_desirability, pool.id
 
+    def append_to_experiment_tracker(self, filename='experiment-tracker.csv'):
+        filepath = "output/" + filename
+        header = [
+            "id", "n", "alpha", "beta", "phi", "activation order", "reward function",  # "stk distr", "min cost", "max cost",
+            "descriptor", "-", "#pools", "#operators", "nakamoto coeff", "comments"
+        ]
+        row = [
+            self.seq_id, self.n, self.alpha, self.reward_scheme.beta, self.extra_pool_cost_fraction,
+            self.agent_activation_order, type(self.reward_scheme).__name__,
+            self.execution_id[self.execution_id.index('-') + 1:], "", reporters.get_number_of_pools(self),
+            reporters.get_operator_count(self), reporters.get_nakamoto_coefficient(self), ""
+        ]
+        hlp.write_to_csv(filepath, header, row)
     

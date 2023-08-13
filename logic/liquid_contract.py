@@ -27,6 +27,7 @@ class LiquidContract:
     
     def prerequisite(self,min_effective_balance):
         return min_effective_balance*self.min_pledge_factor+ min_effective_balance*(1- self.min_pledge_factor)*self.insurance_factor
+
     
     def get_is_private(self):
         return self.margin == 0
@@ -35,7 +36,7 @@ class LiquidContract:
 
 def liquid_staking_list():
     contract_list = [
-         LiquidContract(margin=0, min_pledge_factor=1, insurance_factor=0,name="solo_staking"),
+         LiquidContract(margin=0.00, min_pledge_factor=1.00, insurance_factor=0,name="solo_staking"),
         LiquidContract(margin=0.1, min_pledge_factor=0.75, insurance_factor=0.1,name="stake_pool_1"),
         LiquidContract(margin=0.15, min_pledge_factor=0.5, insurance_factor=0.1,name="stake_pool_2"),
         LiquidContract(margin=0.2, min_pledge_factor=0.25, insurance_factor=0.1,name="stake_pool_3"),

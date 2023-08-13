@@ -28,11 +28,12 @@ class EthStakeholder(Agent):
 
     def step(self):
         self.update_strategy()
-        if "simultaneous" not in self.model.agent_activation_order.lower():
+        
+        #if "simultaneous" not in self.model.agent_activation_order.lower():
             # When agents make moves simultaneously, "step() activates the agent and stages any necessary changes,
             # but does not apply them yet, and advance() then applies the changes". When they don't move simultaneously,
             # they can advance (i.e. execute their strategy) right after updating their strategy
-            self.advance()
+            #self.advance()
 
     def advance(self):
         if self.new_strategy is not None:
@@ -47,15 +48,16 @@ class EthStakeholder(Agent):
         # delegator Utility
         delegator_strategy = self.find_delegation_move()
         delegator_utility = self.calculate_expected_utility(delegator_strategy)
-        possible_moves["delegator"] = delegator_utility, delegator_strategy
+        possible_moves["delegator"] = (delegator_utility, delegator_strategy)
 
         # operator Utility
         operator_strategy = self.choose_pool_operation()
-        if operator_strategy[1] is not None:
-            possible_moves["operator"] = operator_strategy
+        operator_utility = self.calculate_expected_utility(operator_strategy)
+        if operator_strategy is not None:
+            possible_moves["operator"] = (operator_utility,operator_strategy)
 
         # Maximize Utility strategy
-        max_utility_strategy = max(possible_moves.values(), key=lambda key:possible_moves[key][0]) # sort the strategy by the utility
+        max_utility_strategy = max(possible_moves, key=lambda x:possible_moves[x][0]) # sort the strategy by the utility
         self.new_strategy= None if max_utility_strategy == "current" else possible_moves[max_utility_strategy][1]
 
 
@@ -95,7 +97,7 @@ class EthStakeholder(Agent):
         utility = 0
 
         #calculate expected utility of being a operater
-        if len(strategy.own_pools)>0:
+        if len(strategy.owned_pools)>0:
             utility += self.calculate_operator_utility_from_strategy(strategy)
 
         #calculate expected utility of delegating to other pools
@@ -141,7 +143,7 @@ class EthStakeholder(Agent):
         """
         stake_left=self.stake
         insurance = 0
-        alpha = self.model.reward_scheme.alpha
+        alpha = float(self.model.alpha)
         contract_list=liquid_staking_list()
         pool_num_list = [0]*len(contract_list)
         # start from no pools

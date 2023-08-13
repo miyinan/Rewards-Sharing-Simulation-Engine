@@ -13,6 +13,9 @@ class Ethereum():
         self.beta = beta
         self.saturation_threshold = beta
         self.total_stake = model.total_stake
+
+    def alpha(self):
+        return float(self.alpha)
     
     def get_pool_saturation_threshold(self):
         return self.saturation_threshold

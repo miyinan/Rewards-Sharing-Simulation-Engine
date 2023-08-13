@@ -223,3 +223,14 @@ def test_execute_strategy(mocker):
     assert 3 not in model.pools[2].delegators
 
     
+def test_Ethereum_Sim():
+    model = Ethereum_Sim(alpha=0.1, beta=0.2)
+    
+    assert model.alpha == 0.1
+
+def test_update_strategy():
+    model = Ethereum_Sim(beta=0.2,alpha=0.1)
+    agent1 = EthStakeholder(unique_id=1, model=model, stake=0.1, cost=0.001)
+    agent1.update_strategy()
+
+    assert agent1.strategy.stake_allocations == {}

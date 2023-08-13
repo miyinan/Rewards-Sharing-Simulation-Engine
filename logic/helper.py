@@ -159,7 +159,7 @@ def generate_cost_distr_nrm(num_agents, low, high, mean, stddev):
 # ------------------------------------------ calculate reward helper ------------------------------------------ #
 
 # @lru_cache(maxsize=1024)
-def calculate_potential_profit(reward_scheme, stake,total_stake,is_private):
+def calculate_potential_profit(reward_scheme, stake,is_private):
     """
     Calculate a pool's potential profit, which can be defined as the profit it would get at saturation level
     :param reward_scheme: the reward scheme object (of an RSS subclass) used in the simulation
@@ -568,11 +568,11 @@ def add_script_arguments(parser):
     """
     parser.add_argument('--n', nargs="?", type=positive_int, default=1000,
                         help='The number of agents (natural number). Default is 1000.')
-    parser.add_argument('--beta', nargs="+", type=positive_int, default=100,
+    parser.add_argument('--beta', nargs="+", type=positive_float, default=0.001,
                         help='The maximum effective balance of ethereum staking')
-    parser.add_argument('--alpha', nargs="+", type=non_negative_float, default=0.3,
+    parser.add_argument('--alpha', nargs="+", type=non_negative_float, default=0.00,
                         help='The minimum effective balance of ethereum staking')
-    parser.add_argument('--reward_scheme', nargs="?", type=int, default="Ethereum_Sim",
+    parser.add_argument('--reward_scheme', nargs="?", type=str, default="Ethereum_Sim",
                         # todo maybe allow multiple args to enable changing the reward scheme of the system during runtime
                         help='The reward scheme to use in the simulation. 0 for the original reward scheme of Cardano, '
                              '1 for a simplified version of it, 2 for a reward scheme with flat pledge benefit, 3 for '
@@ -580,9 +580,9 @@ def add_script_arguments(parser):
     parser.add_argument('--agent_profile_distr', nargs=len(PROFILE_MAPPING), type=non_negative_float, default=[1, 0, 0],
                         help='The weights for assigning different profiles to the agents. Default is [1, 0, 0], i.e. '
                              '100%% non-myopic agents.')
-    parser.add_argument('--cost_min', nargs="?", type=non_negative_float, default=1e-5,
+    parser.add_argument('--cost_min', nargs="?", type=non_negative_float, default=1e-6,
                         help='The minimum possible cost for operating a stake pool. Default is 1e-5.')
-    parser.add_argument('--cost_max', nargs="?", type=non_negative_float, default=1e-4,
+    parser.add_argument('--cost_max', nargs="?", type=non_negative_float, default=1e-5,
                         help='The maximum possible cost for operating a stake pool. Default is 1e-4.')
     parser.add_argument('--extra_pool_cost_fraction', nargs="?", type=non_negative_float, default=0.4,
                         help='The factor that determines how much an additional pool costs as a fraction of '
