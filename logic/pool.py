@@ -25,7 +25,7 @@ class Pool:
         self.set_desirability()
 
     def set_profit(self, reward_scheme):
-        self.potential_profit = hlp.calculate_potential_profit(reward_scheme=reward_scheme, stake=self.stake, total_stake=reward_scheme.total_stake, is_private=self.is_private)
+        self.potential_profit = hlp.calculate_potential_profit(reward_scheme=reward_scheme, stake=self.stake, is_private=self.is_private)
 
     def set_desirability(self):
         self.desirability = hlp.calculate_pool_desirability(margin=self.margin, potential_profit=self.potential_profit,is_private=self.is_private)

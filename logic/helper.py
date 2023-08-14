@@ -70,7 +70,7 @@ def generate_cost_distr_disparity(n, low, high, c=10):
     return costs
 
 
-def generate_stake_distr_pareto(num_agents, pareto_param=2, seed=156, truncation_factor=-1):
+def generate_stake_distr_pareto(num_agents, pareto_param=10, seed=156, truncation_factor=-1):
     """
     Generate a distribution for the agents' initial stake (wealth),
     sampling from a Pareto distribution
@@ -297,18 +297,23 @@ def calculate_myopic_pool_desirability(margin, current_profit, is_private):
 
 # @lru_cache(maxsize=1024)
 def calculate_operator_utility_from_pool(pool_stake, pledge, margin, cost, reward_scheme):
+    if pool_stake<reward_scheme.alpha:
+        return 0
     r = calculate_pool_reward(reward_scheme=reward_scheme, pool_stake=pool_stake)
+    #print("pool reward:", r)
     stake_fraction = pledge / pool_stake
     r_from_pledge=r*stake_fraction
     commission_r= r*(1-stake_fraction)*margin
-    return r_from_pledge+commission_r-cost
+    total=r_from_pledge+commission_r - cost
+    #print("pool reward:", r,"stake fraction:",stake_fraction,"pledge:",pledge,"pool stake:",pool_stake,"r from pledge:",r_from_pledge,"commission r:",commission_r,"cost:",cost,"total:",total)
+    return total
 
 
 # @lru_cache(maxsize=1024)
 def calculate_delegator_utility_from_pool(stake_allocation, pool_stake, margin, cost, reward_scheme):
     r = calculate_pool_reward(reward_scheme=reward_scheme, pool_stake=pool_stake)
     stake_fraction = stake_allocation / pool_stake
-    return calculate_delegator_reward_from_pool(pool_margin=margin, pool_cost=cost, pool_reward=r,
+    return calculate_delegator_reward_from_pool(pool_margin=margin, pool_reward=r,
                                                 delegator_stake_fraction=stake_fraction)
 
 
@@ -566,11 +571,11 @@ def add_script_arguments(parser):
     adjusted during the course of the simulation, such as k.
     @param parser: an argparse.ArgumentParser object
     """
-    parser.add_argument('--n', nargs="?", type=positive_int, default=1000,
+    parser.add_argument('--n', nargs="?", type=positive_int, default=10,
                         help='The number of agents (natural number). Default is 1000.')
-    parser.add_argument('--beta', nargs="+", type=positive_float, default=0.001,
+    parser.add_argument('--beta', nargs="+", type=positive_float, default=2,
                         help='The maximum effective balance of ethereum staking')
-    parser.add_argument('--alpha', nargs="+", type=non_negative_float, default=0.00,
+    parser.add_argument('--alpha', nargs="+", type=non_negative_float, default=1,
                         help='The minimum effective balance of ethereum staking')
     parser.add_argument('--reward_scheme', nargs="?", type=str, default="Ethereum_Sim",
                         # todo maybe allow multiple args to enable changing the reward scheme of the system during runtime
@@ -580,10 +585,10 @@ def add_script_arguments(parser):
     parser.add_argument('--agent_profile_distr', nargs=len(PROFILE_MAPPING), type=non_negative_float, default=[1, 0, 0],
                         help='The weights for assigning different profiles to the agents. Default is [1, 0, 0], i.e. '
                              '100%% non-myopic agents.')
-    parser.add_argument('--cost_min', nargs="?", type=non_negative_float, default=1e-6,
-                        help='The minimum possible cost for operating a stake pool. Default is 1e-5.')
-    parser.add_argument('--cost_max', nargs="?", type=non_negative_float, default=1e-5,
-                        help='The maximum possible cost for operating a stake pool. Default is 1e-4.')
+    parser.add_argument('--cost_min', nargs="?", type=non_negative_float, default=1e-5,
+                        help='The minimum possible cost for operating a stake pool. Default is 1e-4.')
+    parser.add_argument('--cost_max', nargs="?", type=non_negative_float, default=1e-4,
+                        help='The maximum possible cost for operating a stake pool. Default is 1e-3.')
     parser.add_argument('--extra_pool_cost_fraction', nargs="?", type=non_negative_float, default=0.4,
                         help='The factor that determines how much an additional pool costs as a fraction of '
                              'the original cost value of the stakeholder. Default is 40%%.')

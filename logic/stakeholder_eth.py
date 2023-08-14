@@ -24,10 +24,14 @@ class EthStakeholder(Agent):
         self.strategy = strategy
         self.reward_scheme = self.model.reward_scheme
         self.ranking=self.model.pool_rankings
+        self.unique_id=unique_id
         
 
     def step(self):
         self.update_strategy()
+        if self.new_strategy is not None:
+            # The agent has changed their strategy, so now they have to execute it
+            self.execute_strategy()
         
         #if "simultaneous" not in self.model.agent_activation_order.lower():
             # When agents make moves simultaneously, "step() activates the agent and stages any necessary changes,
@@ -59,6 +63,7 @@ class EthStakeholder(Agent):
         # Maximize Utility strategy
         max_utility_strategy = max(possible_moves, key=lambda x:possible_moves[x][0]) # sort the strategy by the utility
         self.new_strategy= None if max_utility_strategy == "current" else possible_moves[max_utility_strategy][1]
+        #print("max_utility_strategy:",max_utility_strategy,'operator_utility:',operator_utility,'delegator_utility:',delegator_utility,'current_utility:',current_utility)
 
 
     def discard_draft_pools(self,strategy):
@@ -83,14 +88,17 @@ class EthStakeholder(Agent):
             )
 
         for pool_id, allocation in self.strategy.stake_allocations.items():
-            pool = self.model.pools[pool_id]
-            utility += hlp.calculate_delegator_utility_from_pool(
-                stake_allocation=allocation,
-                pool_stake=pool.stake,
-                pool_margin=pool.margin,
-                pool_cost=pool.cost,
-                reward_scheme=self.model.reward_scheme
-            )
+            if pool_id in self.model.pools:
+                pool = self.model.pools[pool_id]
+                utility += hlp.calculate_delegator_utility_from_pool(
+                    stake_allocation=allocation,
+                    pool_stake=pool.stake,
+                    margin=pool.margin,
+                    cost=pool.cost,
+                    reward_scheme=self.model.reward_scheme
+                )
+            else:
+                print("calculate_current_pool_id not in pools:",pool_id,"pools:",self.model.pools.keys())
         return utility
 
     def calculate_expected_utility(self,strategy):
@@ -99,6 +107,7 @@ class EthStakeholder(Agent):
         #calculate expected utility of being a operater
         if len(strategy.owned_pools)>0:
             utility += self.calculate_operator_utility_from_strategy(strategy)
+            #print("operator_utility_pool:",utility)
 
         #calculate expected utility of delegating to other pools
         pools = self.model.pools
@@ -106,6 +115,7 @@ class EthStakeholder(Agent):
             if pool_id in pools:
                 pool = pools[pool_id]
                 utility += self.calculate_delegator_utility_from_pool(pool,allocation)
+                
 
         return utility
 
@@ -117,8 +127,8 @@ class EthStakeholder(Agent):
         return hlp.calculate_delegator_utility_from_pool(
             stake_allocation=allocation,
             pool_stake=pool_stake,
-            pool_margin=pool.margin,
-            pool_cost=pool.cost,
+            margin=pool.margin,
+            cost=pool.cost,
             reward_scheme=self.model.reward_scheme
         )
 
@@ -143,28 +153,40 @@ class EthStakeholder(Agent):
         """
         stake_left=self.stake
         insurance = 0
-        alpha = float(self.model.alpha)
+        alpha = self.model.alpha
         contract_list=liquid_staking_list()
         pool_num_list = [0]*len(contract_list)
         # start from no pools
         owned_pools = {}
 
-        while stake_left < contract_list[-1].prerequisite(alpha):
-            for i in range(len(contract_list)):
-                # have meet contract prerequisite
-                if stake_left >= contract_list[i].prerequisite(alpha):
-                    stake_left -= contract_list[i].prerequisite(alpha) # some stake is used for insurance and pledge
-                    insurance += contract_list[i].get_insurance(alpha)
-                    pool_num_list[i]+=1
+        solo_pool_num = []
+        while stake_left >= contract_list[0].prerequisite(alpha):
+            stake_to_pool=min(stake_left,self.model.beta)
+            solo_pool_num.append(stake_to_pool)
+            stake_left = stake_left-stake_to_pool
+            
+
+        for i in range(1,len(contract_list)):
+            while stake_left >= contract_list[i].prerequisite(alpha):
+                stake_left = stake_left-contract_list[i].prerequisite(alpha)
+                insurance += contract_list[i].get_insurance(alpha)
+                pool_num_list[i]+=1
+                if stake_left < contract_list[-1].get_min_pledge(alpha):
+                    break
                 # if stake_left is not enough for the cheapest contract, then return the strategy 
         
-        cost=self.calculate_cost_by_pool_num(sum(pool_num_list))
+        cost=self.calculate_cost_by_pool_num(sum(pool_num_list)+len(solo_pool_num))
 
-        for i in range(len(pool_num_list)):
-            if pool_num_list[i]>0:
+        for i in range(1,len(pool_num_list)):
+            while pool_num_list[i]>0:
                 pool_id = self.model.get_next_pool_id()
-                pool=self.create_pool_by_smart_contract(pool_id,cost,contract_list[i])
+                pool=self.create_pool_by_smart_contract(pool_id,cost,contract_list[i],alpha=self.model.alpha)
                 owned_pools[pool_id]=pool
+                pool_num_list[i]-=1
+        for i in range(len(solo_pool_num)):
+            pool_id = self.model.get_next_pool_id()
+            pool=Pool(pool_id=pool_id,cost=cost,pledge=solo_pool_num[i],margin=0,owner=self.unique_id,reward_scheme=self.model.reward_scheme,is_private=True)
+            owned_pools[pool_id]=pool
         
         allocations = self.find_delegation_for_operator(stake_left)
 
@@ -175,7 +197,7 @@ class EthStakeholder(Agent):
                         pool_id=pool_id,
                         cost=cost,
                         pledge=contract.get_min_pledge(alpha),
-                        margin=contract.get_min_margin(),
+                        margin=contract.get_margin(),
                         owner=self.unique_id,
                         reward_scheme=self.model.reward_scheme,
                         is_private = contract.get_is_private()
@@ -243,14 +265,23 @@ class EthStakeholder(Agent):
         #for old_allocations and new_allocation overlaps, clear delegation
         for pool_id in old_allocations.keys() - new_allocations.keys():
             pool = current_pools[pool_id]
+            #print("target_remove_pool_id: ",pool_id)
             if pool is not None:
                 # remove delegation
                 self.model.pool_rankings.remove(pool)
                 pool.update_delegation(new_delegation=0, delegator_id=self.unique_id)
                 self.model.pool_rankings.add(pool)
+                #print("remove delegation from pool: ",pool_id)
         #update new delegation
+        
+        #print("new_allocations: ",new_allocations)
+        current_pools = self.model.pools
         for pool_id in new_allocations.keys():
-            pool = current_pools[pool_id]
+            pool = None
+            if pool_id in current_pools.keys():
+                pool = current_pools[pool_id]
+            else:
+                print("pool_id: ",pool_id," not in current_pools")
             if pool is not None: 
                 # add / modify delegation
                 self.model.pool_rankings.remove(pool)
@@ -288,12 +319,15 @@ class EthStakeholder(Agent):
         if len(eligible_pools_ranked) == 0:
             return None
         
+        #print("all_pools_dict:",all_pools_dict)
+
+        #print("Strategy:",self.strategy.stake_allocations)        
         # remove stake from current pools
         for pool_id in self.strategy.stake_allocations.items():
-            pool = all_pools_dict[pool_id]
-            self.model.pool_rankings_myopic.remove(pool)
+            pool = all_pools_dict[pool_id[0]]
+            self.model.pool_rankings.remove(pool)
             pool.update_delegation(new_delegation=0, delegator_id=self.unique_id)
-            self.model.pool_rankings_myopic.add(pool)
+            self.model.pool_rankings.add(pool)
 
         allocations = dict()
         #best_saturation_pool = None
@@ -311,7 +345,7 @@ class EthStakeholder(Agent):
             pool = all_pools_dict[pool_id]
             self.model.pool_rankings.remove(pool)
             pool.update_delegation(new_delegation=allocation, delegator_id=self.unique_id)
-            self.model.pool_rankings_myopic.add(pool)
+            self.model.pool_rankings.add(pool)
 
         if allocations.keys()==[]:
             return None

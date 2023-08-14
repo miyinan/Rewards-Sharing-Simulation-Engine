@@ -234,3 +234,31 @@ def test_update_strategy():
     agent1.update_strategy()
 
     assert agent1.strategy.stake_allocations == {}
+
+def test_choose_pool_operation():
+    model=Ethereum_Sim(beta=0.2,alpha=0.1)
+    agent1 = EthStakeholder(unique_id=1, model=model, stake=1.1, cost=0.001)
+    strategy=agent1.update_strategy()
+    agent1.execute_strategy()
+
+    assert strategy.stake_allocations == {}
+
+
+def test_open_pool():
+    model = Ethereum_Sim(beta=0.2,alpha=0.1)
+    agent1 = EthStakeholder(unique_id=1, model=model, stake=0.1, cost=0.001)
+    agent2= EthStakeholder(unique_id=2, model=model, stake=0.05, cost=0.001)
+    agent3 = EthStakeholder(unique_id=3, model=model, stake=0.001, cost=0.001)
+    agent4 = EthStakeholder(unique_id=4, model=model, stake=0.05, cost=0.001)
+    
+    pool1=Pool(cost=0.001, pledge=0.1, owner=1, margin=0.1, reward_scheme=model.reward_scheme, pool_id=1)
+    pool2=Pool(cost=0.001, pledge=0.05, owner=2, margin=0.1, reward_scheme=model.reward_scheme, pool_id=2)
+    
+    agent1.strategy=Strategy(stake_allocations=None, owned_pools={1:pool1})
+    agent2.strategy=Strategy(stake_allocations=None, owned_pools={2:pool2})
+    agent3.strategy=Strategy(stake_allocations={1:0.001}, owned_pools=None)
+    agent4.strategy=Strategy(stake_allocations={1:0.05}, owned_pools=None)
+
+    agent1.open_pool(pool_id=1)
+    
+    assert agent1.strategy.owned_pools=={1:pool1}

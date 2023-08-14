@@ -512,11 +512,11 @@ class Ethereum_Sim(Model):
         self.current_phase = 0
         total_phases = 1
 
-        self.beta = args['beta']
-        self.alpha = args['alpha']
+        
         self.n= args['n']
+        self.beta = args['beta']/self.n
+        self.alpha = args['alpha']/self.n
         self.reward_scheme = Ethereum(model=self, beta=self.beta, alpha=self.alpha)
-
         self.total_phases = total_phases
         self.multi_phase_params = {}
         self.max_iterations = args['max_iterations']
@@ -530,10 +530,17 @@ class Ethereum_Sim(Model):
         self.pool_rankings = SortedList([None] * ( self.n),
                                         key=hlp.pool_comparison_key)  # all pools ranked from best to worst non-myopically
 
-        self.total_stake = self.initialize_agents(
+        total_stake = self.initialize_agents(
             args['agent_profile_distr'], args['cost_min'], args['cost_max'], args['pareto_param'],
             args['stake_distr_source'].lower(), seed=self.seed
         )
+        if total_stake <= 0:
+            raise ValueError('Total stake must be > 0')
+
+        if total_stake != 1:
+            # normalize stake values so that they are expressed as relative stakes
+            total_stake = self.normalize_agent_stake(total_stake)
+        self.total_stake = total_stake
         #self.export_initial_state_desc_file(self.seed)
         self.consecutive_idle_steps = 0  # steps towards convergence
         self.current_step_idle = True
@@ -711,15 +718,15 @@ class Ethereum_Sim(Model):
         hlp.export_csv_file(row_list, filepath)
 
     def export_pools_file(self):
-        row_list = [["Pool id", "Owner id", "Owner stake", "Pool Pledge", "Pool stake", "Owner cost", "Pool cost",
-                     "Pool margin", "Pool PP", "Pool desirability"]]
+        row_list = [["Pool id", "Owner id", "Stake", "Pool Pledge", "Pool stake", "Owner cost", "Pool cost",
+                     "Pool margin", "Delegator Id"]]
         agents = self.get_agents_dict()
         pools = self.get_pools_list()
         decimals = 15
         row_list.extend(
-            [[pool.id, pool.owner, round(agents[pool.owner].stake, decimals), round(pool.pledge, decimals),
+            [[pool.id, pool.owner, round(pool.stake, decimals), round(pool.pledge, decimals),
               round(pool.stake, decimals), round(agents[pool.owner].cost, decimals), round(pool.cost, decimals),
-              round(pool.margin, decimals), pool.potential_profit, pool.desirability] for pool in pools])
+              round(pool.margin, decimals),pool.delegators.keys()] for pool in pools])
         prefix = 'final-state-pools-'
         filename = prefix + self.execution_id + '.csv'
         filepath = self.directory / filename

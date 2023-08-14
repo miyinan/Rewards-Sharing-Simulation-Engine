@@ -23,10 +23,10 @@ class LiquidContract:
         return self.min_pledge_factor*min_effective_balance
     
     def get_insurance(self,min_effective_balance):
-        return self.insurance*(1-self.min_pledge_factor)*min_effective_balance
+        return self.insurance_factor*(1-self.min_pledge_factor)*min_effective_balance
     
     def prerequisite(self,min_effective_balance):
-        return min_effective_balance*self.min_pledge_factor+ min_effective_balance*(1- self.min_pledge_factor)*self.insurance_factor
+        return min_effective_balance*self.min_pledge_factor + min_effective_balance*(1- self.min_pledge_factor)*self.insurance_factor
 
     
     def get_is_private(self):

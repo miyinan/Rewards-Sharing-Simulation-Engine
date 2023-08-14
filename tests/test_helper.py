@@ -202,7 +202,7 @@ def test_calculate_potential_profit():
     #private_pool
     pool = Pool(pool_id=1, cost=0.001, pledge=0.1, owner=1, reward_scheme=reward_scheme, margin=0,is_private=True)
     total_stake = 0.1
-    potential_profit = hlp.calculate_potential_profit(reward_scheme,pool.stake,total_stake,is_private=pool.is_private)
+    potential_profit = hlp.calculate_potential_profit(reward_scheme,pool.stake,is_private=pool.is_private)
 
     assert potential_profit == 0
     
