@@ -295,7 +295,7 @@ def get_pool_splitter_count(model):
 def get_cost_efficient_count(model):
     all_agents = model.get_agents_list()
     potential_profits = [
-        hlp.calculate_potential_profit(reward_scheme=model.reward_scheme, stake=agent.stake, cost=agent.cost)
+        hlp.calculate_potential_profit(reward_scheme=model.reward_scheme, stake=agent.stake,is_private=False)
         for agent in all_agents
     ]
     positive_potential_profits = [pp for pp in potential_profits if pp > 0]
@@ -403,6 +403,20 @@ def get_total_stake(model):
     stakes = [pool.stake for pool in current_pools]
     return fsum(stakes)
 
+def calculate_HHI(model):
+    agents = model.schedule.agents
+    pool_share=[]
+    pools=model.pools
+    print("pools",pools)
+    for agent in agents:
+        agent_owned_pools=agent.get_owned_pools()
+        print("agent_owned_pools",agent_owned_pools)
+        agent_owned_pools_stake = [pool.stake for pool in agent_owned_pools]
+        agent_market_share = fsum(agent_owned_pools_stake)
+        pool_share.append(agent_market_share)
+    hhi=hlp.calculate_hhi(pool_share)
+    return hhi
+
 
 ALL_MODEL_REPORTEERS = {
     "Contract type": get_contract_type,
@@ -436,7 +450,8 @@ ALL_MODEL_REPORTEERS = {
     "Total delegated stake": get_total_delegated_stake,
     "Total agent stake": get_active_stake_agents,
     "Operator count": get_operator_count,
-    "Total stake": get_total_stake
+    "Total stake": get_total_stake,
+    "HHI": calculate_HHI
 }
 
 REPORTER_IDS = {
@@ -471,6 +486,7 @@ REPORTER_IDS = {
     29: "Total delegated stake",
     30: "Total agent stake",
     31: "Operator count",
-    32: "Total stake"
+    32: "Total stake",
+    33: "HHI"
 }
 

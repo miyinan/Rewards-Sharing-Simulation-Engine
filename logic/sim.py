@@ -479,7 +479,7 @@ class Ethereum_Sim(Model):
         args.pop('args')
         
         if args['metrics'] is None:
-            args['metrics'] = [1, 2, 6, 9, 17, 18, 25]
+            args['metrics'] = [1, 2,3,32, 6, 9, 12,17, 18, 20,31,33]
         if args['agent_profile_distr'] is None: 
             args['agent_profile_distr'] = [1, 0, 0] # all non-myopic-agents
         
@@ -513,14 +513,28 @@ class Ethereum_Sim(Model):
         total_phases = 1
 
         
-        self.n= args['n']
-        self.beta = args['beta']/self.n
-        self.alpha = args['alpha']/self.n
+        other_fields = [
+            'n', 'alpha', 'beta', 'relative_utility_threshold', 'absolute_utility_threshold', 'max_iterations',
+            'extra_pool_cost_fraction', 'agent_activation_order', 'generate_graphs'
+        ]
+        multi_phase_params = {}
+        for field in other_fields:
+            instance = self
+            value = args[field]
+            if isinstance(value, list):
+                # a number of values were given for this field, to be used in different phases
+                multi_phase_params[field] = value
+                setattr(instance, field, value[self.current_phase])
+                total_phases = max(len(value), total_phases)
+            else:
+                setattr(instance, field, value)
+
+        self.alpha = self.alpha / self.n
+        self.beta = self.beta / self.n
+        
         self.reward_scheme = Ethereum(model=self, beta=self.beta, alpha=self.alpha)
         self.total_phases = total_phases
-        self.multi_phase_params = {}
-        self.max_iterations = args['max_iterations']
-
+        self.multi_phase_params = multi_phase_params
         self.running = True  # for batch running and visualisation purposes
         self.schedule = SemiSimultaneousActivation(self)
         self.agent_activation_order = 'semisimultaneous'
@@ -541,7 +555,7 @@ class Ethereum_Sim(Model):
             # normalize stake values so that they are expressed as relative stakes
             total_stake = self.normalize_agent_stake(total_stake)
         self.total_stake = total_stake
-        #self.export_initial_state_desc_file(self.seed)
+        self.export_initial_state_desc_file(self.seed)
         self.consecutive_idle_steps = 0  # steps towards convergence
         self.current_step_idle = True
         self.extra_pool_cost_fraction= args['extra_pool_cost_fraction']
@@ -683,9 +697,9 @@ class Ethereum_Sim(Model):
             'Min stake': stake_stats[1],
             'Mean stake': stake_stats[2],
             'Median stake': stake_stats[3],
-            'Standard deviation of stake': stake_stats[4],
-            'Nakamoto coefficient prior': reporters.get_nakamoto_coefficient(self),
-            'Cost efficient agents': reporters.get_cost_efficient_count(self)
+            'Standard deviation of stake': stake_stats[4]
+            #'Nakamoto coefficient prior': reporters.get_nakamoto_coefficient(self)
+            #'Cost efficient agents': reporters.get_cost_efficient_count(self)
         }
         filename = "initial-state-descriptors.json"
         filepath = self.directory / filename

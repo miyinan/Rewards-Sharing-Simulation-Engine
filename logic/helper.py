@@ -560,6 +560,14 @@ def fraction(value):
         raise argparse.ArgumentTypeError("invalid fraction value: {}".format(value))
     return float_value
 
+def calculate_hhi(pool_stake):
+    total_stake = sum(pool_stake)
+    if total_stake == 0:
+        return 0
+    pool_shares = [quantity / total_stake for quantity in pool_stake]
+    hhi = sum(pool_**2 for pool_ in pool_shares)
+    return hhi
+
 
 def add_script_arguments(parser):
     """
@@ -571,7 +579,7 @@ def add_script_arguments(parser):
     adjusted during the course of the simulation, such as k.
     @param parser: an argparse.ArgumentParser object
     """
-    parser.add_argument('--n', nargs="?", type=positive_int, default=10,
+    parser.add_argument('--n', nargs="?", type=positive_int, default=100,
                         help='The number of agents (natural number). Default is 1000.')
     parser.add_argument('--beta', nargs="+", type=positive_float, default=2,
                         help='The maximum effective balance of ethereum staking')

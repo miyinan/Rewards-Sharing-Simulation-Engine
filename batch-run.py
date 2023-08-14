@@ -6,7 +6,7 @@ from custom_batchrunner import custom_batch_run
 import time
 import numpy as np
 
-import logic.sim as sim
+from logic.sim import Ethereum_Sim
 import logic.helper as hlp
 from logic.model_reporters import ALL_MODEL_REPORTEERS
 
@@ -24,9 +24,9 @@ if __name__ == "__main__":
                         help='The maximum number of iterations of the system. Default is 1000.')
     parser.add_argument('--n', nargs="*", type=int, default=1000,
                         help='The number of agents (natural number). Default is 100.')
-    parser.add_argument('--beta', nargs="*", type=int, default=[100, 200, 300],
+    parser.add_argument('--beta', nargs="*", type=float, default=1.0,
                         help='beta, The max_effective balance (ETH) value of the system (natural number). Default is 10.')
-    parser.add_argument('--alpha', nargs="*", type=float, default=0.001,
+    parser.add_argument('--alpha', nargs="*", type=float, default=1.0,
                         help='alpha, The min_effective balance value of the system (int number ). Default is 0.001')
     parser.add_argument('--inactive_stake_fraction', nargs="*", type=float, default=0,
                         help='The fraction of the total stake that remains inactive (does not belong to any of the agents). Default is 0.')
@@ -44,7 +44,7 @@ if __name__ == "__main__":
                              'the original cost value of the stakeholder. Default is 40%%.')
     parser.add_argument('--stake_distr_source', nargs="?", type=str, default='Pareto',
                         help='The distribution type to use for the initial allocation of stake to the agents.')
-    parser.add_argument('--reward_scheme', nargs="?", type=int, default=0, choices=range(4),
+    parser.add_argument('--reward_scheme', nargs="?", type=str, default="Ethereum_Sim",
                         help='The reward scheme to use in the simulation. 0 for the original reward scheme of Ethereum')
     parser.add_argument('--relative_utility_threshold', nargs="+", type=float, default=0,
                         help='The utility increase ratio under which moves are disregarded. Default is 0%%.')
@@ -83,7 +83,7 @@ if __name__ == "__main__":
 
     start_time = time.time()
     results, batch_run_directory = custom_batch_run(
-        sim.Simulation,
+        model_cls=Ethereum_Sim,
         parameters=params,
         iterations=1, #todo maybe add as command-line option
         max_steps=params['max_iterations'],

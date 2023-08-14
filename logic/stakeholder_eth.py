@@ -372,3 +372,14 @@ class EthStakeholder(Agent):
         self.model.pool_rankings.remove(old_pool)
         self.model.pool_rankings.add(updated_pool)
         return updated_pool
+    
+    def get_owned_pools(self):
+        pools=self.model.pools
+        #print(  "pools: ",pools)
+        if pools is None:
+            return None
+        owned_pools=[]
+        for pool in pools.values():
+            if pool.owner==self.unique_id:
+                owned_pools.append(pool)
+        return owned_pools

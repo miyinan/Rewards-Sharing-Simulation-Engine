@@ -223,3 +223,17 @@ def test_get_median_stk_rnk(mocker):
     median_stk_rank = get_median_stk_rnk(model)
 
     assert median_stk_rank == 1
+
+
+def test_calculate_HHI(mocker):
+    model = logic.sim.Ethereum_Sim()
+    agents={x:EthStakeholder(unique_id=x, model=model, stake=x, cost=0.001) for x in range(1, 101)}
+    mocker.patch('logic.sim.Ethereum_Sim.get_agents_dict', return_value=agents)
+    pools = []
+    for i in range(3):
+        pools.append(Pool(owner=1, cost=0.001, pledge=0.001, margin=0.1, pool_id=i, reward_scheme=model.reward_scheme))
+    pools.append(Pool(owner=3, cost=0.001, pledge=0.001, margin=0.1, pool_id=3, reward_scheme=model.reward_scheme))
+    pools.append(Pool(owner=2, cost=0.001, pledge=0.001, margin=0.1, pool_id=4, reward_scheme=model.reward_scheme))
+    model.pools=pools
+
+    hhi=calculate_HHI(model)
