@@ -465,7 +465,7 @@ class Simulation(Model):
 
 class Ethereum_Sim(Model):
     def __init__(
-            self,n=100,beta=0.001,alpha=0.00008,stake_distr_source='Pareto', agent_profile_distr=None, 
+            self,n=100,beta=2,alpha=1,liquidity=0.3,stake_distr_source='Pareto', agent_profile_distr=None, 
             inactive_stake_fraction=0, inactive_stake_fraction_known=False, relative_utility_threshold=0,
             absolute_utility_threshold=0, seed=None, pareto_param=2.0, max_iterations=1000, cost_min=0,
             cost_max=1e-4, extra_pool_cost_fraction=0.4, agent_activation_order="semisimultaneous",
@@ -514,7 +514,7 @@ class Ethereum_Sim(Model):
 
         
         other_fields = [
-            'n', 'alpha', 'beta', 'relative_utility_threshold', 'absolute_utility_threshold', 'max_iterations',
+            'n', 'alpha', 'beta','liquidity', 'relative_utility_threshold', 'absolute_utility_threshold', 'max_iterations',
             'extra_pool_cost_fraction', 'agent_activation_order', 'generate_graphs'
         ]
         multi_phase_params = {}

@@ -585,11 +585,11 @@ def add_script_arguments(parser):
                         help='The maximum effective balance of ethereum staking')
     parser.add_argument('--alpha', nargs="+", type=non_negative_float, default=1,
                         help='The minimum effective balance of ethereum staking')
+    parser.add_argument('--liquidity', nargs="+", type=non_negative_float, default=0.3,
+                        help='The minimum effective balance of ethereum staking')
     parser.add_argument('--reward_scheme', nargs="?", type=str, default="Ethereum_Sim",
                         # todo maybe allow multiple args to enable changing the reward scheme of the system during runtime
-                        help='The reward scheme to use in the simulation. 0 for the original reward scheme of Cardano, '
-                             '1 for a simplified version of it, 2 for a reward scheme with flat pledge benefit, 3 for '
-                             'a reward scheme with curved pledge benefit (CIP-7) and 4 for the reward scheme of CIP-50.')
+                        help='The reward scheme to use in the simulation. Default is "Ethereum_Sim".')
     parser.add_argument('--agent_profile_distr', nargs=len(PROFILE_MAPPING), type=non_negative_float, default=[1, 0, 0],
                         help='The weights for assigning different profiles to the agents. Default is [1, 0, 0], i.e. '
                              '100%% non-myopic agents.')

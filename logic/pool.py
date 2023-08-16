@@ -41,3 +41,26 @@ class Pool:
 
     def get_stake(self):
         return self.stake
+    
+    def calculate_operator_utility_by_pool(self,cost,liquidity,is_private):
+        pool_stake=self.stake
+        pool_reward=self.calculate_pool_reward(pool_stake)
+        #if this is a solo staking pool, then the operator's reward is the pool reward minus the cost
+        if is_private:
+            return pool_reward-cost
+        #if this is a public staking pool, then the operator's reward come from many aspects
+        else:
+            operate_reward=pool_reward*(self.pledge/pool_stake)
+            commission_reward = pool_reward * (1 - self.pledge / pool_stake)*self.margin
+            liquidity_reward=pool_reward*(self.pledge/pool_stake)*liquidity
+            return operate_reward+commission_reward+liquidity_reward-cost
+    
+    def calculate_delegator_utility_by_pool(self,allocation,liquidity,is_private):
+        if is_private:
+            return 0
+        pool_stake=self.stake
+        pool_reward = self.calculate_pool_reward(pool_stake)
+        r=pool_reward*(allocation/pool_stake)*(1-self.margin+liquidity)
+        return r
+    
+
