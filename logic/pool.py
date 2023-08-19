@@ -41,3 +41,11 @@ class Pool:
 
     def get_stake(self):
         return self.stake
+<<<<<<< Updated upstream
+=======
+    
+    
+
+    
+
+>>>>>>> Stashed changes

@@ -309,8 +309,37 @@ def calculate_operator_utility_from_pool(pool_stake, pledge, margin, cost, rewar
     return total
 
 
+def calculate_operator_utility_from_pool_with_liquidity(reward_scheme,pool_stake,cost,pledge,margin,liquidity,is_private):
+    '''
+    It is used to calculate operator's utility from a pool with liquidity, 
+    it is used when deciding whether to create a new pool. 
+    Using this method doesn'y need to create pool to calculate
+    '''
+    pool_reward=calculate_pool_reward(reward_scheme,pool_stake)
+     #if this is a solo staking pool, then the operator's reward is the pool reward minus the cost
+    if is_private:
+       return pool_reward-cost
+    #if this is a public staking pool, then the operator's reward come from many aspects
+    else:
+        operate_reward=pool_reward*(pledge/pool_stake)
+        commission_reward = pool_reward * (1 - pledge / pool_stake)*margin
+        liquidity_reward=pool_reward*(pledge/pool_stake)*liquidity
+        return operate_reward+commission_reward+liquidity_reward-cost
+        
+def calculate_delegator_utility_from_pool_with_liquidity(reward_scheme,pool_stake,margin,allocation,liquidity,is_private):
+    '''
+    It is used to calculate delegator's utility from a pool with liquidity
+    With some attributes about a pool and a delegator's allocation, it can calculate the delegator's utility from the pool
+    '''
+    if is_private:
+        return 0
+    pool_reward = calculate_pool_reward(reward_scheme,pool_stake)
+    r=pool_reward*(allocation/pool_stake)*(1-margin+liquidity)
+    return r
+
+
 # @lru_cache(maxsize=1024)
-def calculate_delegator_utility_from_pool(stake_allocation, pool_stake, margin, cost, reward_scheme):
+def calculate_delegator_utility_from_pool(stake_allocation, pool_stake, margin, reward_scheme):
     r = calculate_pool_reward(reward_scheme=reward_scheme, pool_stake=pool_stake)
     stake_fraction = stake_allocation / pool_stake
     return calculate_delegator_reward_from_pool(pool_margin=margin, pool_reward=r,
@@ -569,6 +598,7 @@ def calculate_hhi(pool_stake):
     return hhi
 
 
+
 def add_script_arguments(parser):
     """
     This function adds arguments to be parsed by the argument parser. Note that we use custom types to impose
@@ -585,6 +615,11 @@ def add_script_arguments(parser):
                         help='The maximum effective balance of ethereum staking')
     parser.add_argument('--alpha', nargs="+", type=non_negative_float, default=1,
                         help='The minimum effective balance of ethereum staking')
+<<<<<<< Updated upstream
+=======
+    parser.add_argument('--liquidity', nargs="+", type=non_negative_float, default=0.2,
+                        help='The minimum effective balance of ethereum staking')
+>>>>>>> Stashed changes
     parser.add_argument('--reward_scheme', nargs="?", type=str, default="Ethereum_Sim",
                         # todo maybe allow multiple args to enable changing the reward scheme of the system during runtime
                         help='The reward scheme to use in the simulation. 0 for the original reward scheme of Cardano, '
@@ -593,9 +628,9 @@ def add_script_arguments(parser):
     parser.add_argument('--agent_profile_distr', nargs=len(PROFILE_MAPPING), type=non_negative_float, default=[1, 0, 0],
                         help='The weights for assigning different profiles to the agents. Default is [1, 0, 0], i.e. '
                              '100%% non-myopic agents.')
-    parser.add_argument('--cost_min', nargs="?", type=non_negative_float, default=1e-5,
+    parser.add_argument('--cost_min', nargs="?", type=non_negative_float, default=1e-4,
                         help='The minimum possible cost for operating a stake pool. Default is 1e-4.')
-    parser.add_argument('--cost_max', nargs="?", type=non_negative_float, default=1e-4,
+    parser.add_argument('--cost_max', nargs="?", type=non_negative_float, default=1e-3,
                         help='The maximum possible cost for operating a stake pool. Default is 1e-3.')
     parser.add_argument('--extra_pool_cost_fraction', nargs="?", type=non_negative_float, default=0.4,
                         help='The factor that determines how much an additional pool costs as a fraction of '

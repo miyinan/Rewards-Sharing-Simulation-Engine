@@ -417,6 +417,42 @@ def calculate_HHI(model):
     hhi=hlp.calculate_hhi(pool_share)
     return hhi
 
+def get_total_cost(model):
+    pools=model.get_pools_list()
+    total_cost=0
+    for pool in pools:
+        total_cost+=pool.cost
+
+    return total_cost
+
+def get_total_delegate(model):
+    pools=model.get_pools_list()
+    total_delegate=0
+    for pool in pools:
+        for delegator in pool.delegators.values():
+            total_delegate+=delegator
+
+    return total_delegate
+
+def get_unused_stake(model):
+    total_stake = fsum([agent.stake for agent in model.schedule.agents])
+    total_pledge=get_total_pledge(model)
+    total_delegate=get_total_delegate(model)
+    return total_stake-total_pledge-total_delegate
+
+def get_liquidity_gain_percent(model):
+    total_delegate=get_total_delegate(model)
+    total_stake=get_total_stake(model)
+    total_delegate*model.liquidity
+    if total_stake==0:
+        return 0
+    return total_delegate/total_stake*model.liquidity
+
+
+
+
+
+
 
 ALL_MODEL_REPORTEERS = {
     "Contract type": get_contract_type,
@@ -451,7 +487,11 @@ ALL_MODEL_REPORTEERS = {
     "Total agent stake": get_active_stake_agents,
     "Operator count": get_operator_count,
     "Total stake": get_total_stake,
-    "HHI": calculate_HHI
+    "HHI": calculate_HHI,
+    "Total cost":get_total_cost,
+    "Total delegate": get_total_delegate,
+    "Total Unused Stake":get_unused_stake,
+    "Liquidity Gain percent": get_liquidity_gain_percent
 }
 
 REPORTER_IDS = {
@@ -487,6 +527,10 @@ REPORTER_IDS = {
     30: "Total agent stake",
     31: "Operator count",
     32: "Total stake",
-    33: "HHI"
+    33: "HHI",
+    34: "Total cost",
+    35: "Total delegate",
+    36: "Total Unused Stake",
+    37: "Liquidity Gain percent"
 }
 

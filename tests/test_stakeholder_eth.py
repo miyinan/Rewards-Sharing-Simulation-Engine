@@ -46,7 +46,7 @@ def test_close_pool():
 '''
 
 def test_calculate_cost_by_pool_num():
-    model=Ethereum_Sim(beta=0.2,alpha=0.1,extra_pool_cost_fraction=0.4)
+    model=Ethereum_Sim(beta=2,alpha=1,extra_pool_cost_fraction=0.4)
     agent = EthStakeholder(unique_id=1, model=model, stake=0.1, cost=0.001)
     cost = agent.calculate_cost_by_pool_num(1)
     cost2=agent.calculate_cost_by_pool_num(2)
