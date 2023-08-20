@@ -1,7 +1,5 @@
 TOTAL_EPOCH_REWARDS_R = 1
 
-
-
 class Ethereum():
     """
     For Ethereum
@@ -13,6 +11,7 @@ class Ethereum():
         self.beta = beta
         self.saturation_threshold = beta
         self.total_stake = model.total_stake
+        self.TOTAL_EPOCH_REWARDS_R = 1
 
     def alpha(self):
         return float(self.alpha)
@@ -23,13 +22,11 @@ class Ethereum():
     def calculate_pool_reward(self, pool_stake):
         r = 0
         if self.beta >= pool_stake >= self.alpha:
-            r = TOTAL_EPOCH_REWARDS_R * pool_stake/self.total_stake
+            r = self.TOTAL_EPOCH_REWARDS_R * pool_stake/self.total_stake
         elif pool_stake > self.beta:
-            r = TOTAL_EPOCH_REWARDS_R * self.saturation_threshold/self.total_stake
+            r = self.TOTAL_EPOCH_REWARDS_R * self.saturation_threshold/self.total_stake
         return r
 
-<<<<<<< Updated upstream
-=======
 class Ethereum_hard():
     """
     For Ethereum, modified, so agents can choose their own stake
@@ -60,4 +57,3 @@ class Ethereum_hard():
     
         
 
->>>>>>> Stashed changes

@@ -297,6 +297,9 @@ def calculate_myopic_pool_desirability(margin, current_profit, is_private):
 
 # @lru_cache(maxsize=1024)
 def calculate_operator_utility_from_pool(pool_stake, pledge, margin, cost, reward_scheme):
+    '''
+    no liquidity
+    '''
     if pool_stake<reward_scheme.alpha:
         return 0
     r = calculate_pool_reward(reward_scheme=reward_scheme, pool_stake=pool_stake)
@@ -615,17 +618,14 @@ def add_script_arguments(parser):
                         help='The maximum effective balance of ethereum staking')
     parser.add_argument('--alpha', nargs="+", type=non_negative_float, default=1,
                         help='The minimum effective balance of ethereum staking')
-<<<<<<< Updated upstream
-=======
-    parser.add_argument('--liquidity', nargs="+", type=non_negative_float, default=0.2,
+    parser.add_argument('--liquidity', nargs="+", type=non_negative_float, default=0.1,
                         help='The minimum effective balance of ethereum staking')
->>>>>>> Stashed changes
     parser.add_argument('--reward_scheme', nargs="?", type=str, default="Ethereum_Sim",
                         # todo maybe allow multiple args to enable changing the reward scheme of the system during runtime
                         help='The reward scheme to use in the simulation. 0 for the original reward scheme of Cardano, '
                              '1 for a simplified version of it, 2 for a reward scheme with flat pledge benefit, 3 for '
                              'a reward scheme with curved pledge benefit (CIP-7) and 4 for the reward scheme of CIP-50.')
-    parser.add_argument('--agent_profile_distr', nargs=len(PROFILE_MAPPING), type=non_negative_float, default=[1, 0, 0],
+    parser.add_argument('--agent_profile', nargs="?", type=str, default='hard',
                         help='The weights for assigning different profiles to the agents. Default is [1, 0, 0], i.e. '
                              '100%% non-myopic agents.')
     parser.add_argument('--cost_min', nargs="?", type=non_negative_float, default=1e-4,
@@ -656,9 +656,12 @@ def add_script_arguments(parser):
     parser.add_argument('--inactive_stake_fraction_known', type=bool, default=False,
                         action=argparse.BooleanOptionalAction,
                         help='Is the inactive stake fraction of the system known beforehand? Default is no.')
-    parser.add_argument('--iterations_after_convergence', nargs="?", type=int, default=10,  # todo maybe make constant
+    
+
+
+    parser.add_argument('--iterations_after_convergence', nargs="?", type=int, default=40,  # todo maybe make constant
                         help='The minimum consecutive idle iterations that are required before terminations. '
-                             'Default is 10.')
+                             'Default is 20.')
     parser.add_argument('--max_iterations', nargs="?", type=positive_int, default=2000,
                         help='The maximum number of iterations of the system. Default is 2000.')
     parser.add_argument('--metrics', nargs="+", type=int, default=None, choices=range(1, len(REPORTER_IDS) + 1),

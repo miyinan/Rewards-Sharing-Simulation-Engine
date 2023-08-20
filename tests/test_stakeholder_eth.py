@@ -2,22 +2,10 @@ import pytest
 from copy import copy
 
 from logic.sim import Ethereum_Sim
-from logic.stakeholder_eth import EthStakeholder
+from logic.stakeholder_eth import EthStakeholder, EthStakeholder_easy, EthStakeholder_hard
 from logic.strategy import Strategy
 import logic.helper as hlp
 from logic.pool import Pool
-
-
-def test_calculate_operator_utility_from_strategy():
-    model=Ethereum_Sim(beta=0.2,alpha=0.1)
-    model.total_stake=1
-    agent = EthStakeholder(unique_id=1, model=model, stake=0.1, cost=0.001)
-    pool = Pool(cost=0.05, pledge=0.1, owner=1, margin=0.1, reward_scheme=model.reward_scheme, pool_id=555)
-    strategy = Strategy(owned_pools={555: pool})
-    utility = agent.calculate_operator_utility_from_strategy(strategy)
-    
-    assert model.total_stake == 1
-    assert utility == pytest.approx(0.05, abs=1e-6)
 
 
 def test_close_pool():
@@ -46,13 +34,13 @@ def test_close_pool():
 '''
 
 def test_calculate_cost_by_pool_num():
-    model=Ethereum_Sim(beta=2,alpha=1,extra_pool_cost_fraction=0.4)
-    agent = EthStakeholder(unique_id=1, model=model, stake=0.1, cost=0.001)
+    model=Ethereum_Sim(beta=2,alpha=1,n=100,extra_pool_cost_fraction=0.4)
+    agent = EthStakeholder_hard(unique_id=1, model=model, stake=0.1, cost=0.001)
     cost = agent.calculate_cost_by_pool_num(1)
     cost2=agent.calculate_cost_by_pool_num(2)
 
     assert cost == pytest.approx(0.001, abs=1e-6)
-    assert cost2 == pytest.approx(0.001+0.001*0.4, abs=1e-6)
+    assert cost2 == pytest.approx((0.001+0.001*0.4)/2, abs=1e-6)
 
 
 def test_calculate_operator_utility_from_strategy():
@@ -224,32 +212,35 @@ def test_execute_strategy(mocker):
 
     
 def test_Ethereum_Sim():
-    model = Ethereum_Sim(alpha=0.1, beta=0.2)
+    model = Ethereum_Sim(alpha=1, beta=2,n=100)
     
-    assert model.alpha == 0.1
+    assert model.alpha == 0.01
+    assert model.beta == 0.02
 
 def test_update_strategy():
-    model = Ethereum_Sim(beta=0.2,alpha=0.1)
-    agent1 = EthStakeholder(unique_id=1, model=model, stake=0.1, cost=0.001)
+    model = Ethereum_Sim(beta=2,alpha=1,liquidity=0.1,n=100)
+    agent1 = EthStakeholder_hard(unique_id=1, model=model, stake=0.1, cost=0.001)
     agent1.update_strategy()
 
     assert agent1.strategy.stake_allocations == {}
 
 def test_choose_pool_operation():
-    model=Ethereum_Sim(beta=0.2,alpha=0.1)
-    agent1 = EthStakeholder(unique_id=1, model=model, stake=1.1, cost=0.001)
-    strategy=agent1.update_strategy()
-    agent1.execute_strategy()
+    model = Ethereum_Sim(beta=2,alpha=1,liquidity=0.1,n=100)
+    agent1 = EthStakeholder_hard(unique_id=1, model=model, stake=0.1, cost=0.001)
+    agent1.update_strategy()
+    if agent1.new_strategy:
+        agent1.execute_strategy()
 
-    assert strategy.stake_allocations == {}
+    assert agent1.strategy.stake_allocations == {}
+    assert agent1.strategy.owned_pools.values()!={}
 
 
 def test_open_pool():
-    model = Ethereum_Sim(beta=0.2,alpha=0.1)
-    agent1 = EthStakeholder(unique_id=1, model=model, stake=0.1, cost=0.001)
-    agent2= EthStakeholder(unique_id=2, model=model, stake=0.05, cost=0.001)
-    agent3 = EthStakeholder(unique_id=3, model=model, stake=0.001, cost=0.001)
-    agent4 = EthStakeholder(unique_id=4, model=model, stake=0.05, cost=0.001)
+    model = Ethereum_Sim(beta=2,alpha=1,liquidity=0.1,n=100)
+    agent1 = EthStakeholder_hard(unique_id=1, model=model, stake=0.1, cost=0.001)
+    agent2= EthStakeholder_hard(unique_id=2, model=model, stake=0.05, cost=0.001)
+    agent3 = EthStakeholder_hard(unique_id=3, model=model, stake=0.001, cost=0.001)
+    agent4 = EthStakeholder_hard(unique_id=4, model=model, stake=0.05, cost=0.001)
     
     pool1=Pool(cost=0.001, pledge=0.1, owner=1, margin=0.1, reward_scheme=model.reward_scheme, pool_id=1)
     pool2=Pool(cost=0.001, pledge=0.05, owner=2, margin=0.1, reward_scheme=model.reward_scheme, pool_id=2)
@@ -262,3 +253,12 @@ def test_open_pool():
     agent1.open_pool(pool_id=1)
     
     assert agent1.strategy.owned_pools=={1:pool1}
+    assert model.liquidity==0.1
+
+
+def test_beginner_pool_operation():
+    model=Ethereum_Sim(beta=2,alpha=1,liquidity=0.1,n=100,extra_pool_cost_fraction=0.4)
+    agent1 = EthStakeholder_hard(unique_id=1, model=model, stake=0.1, cost=0.001)
+    margin=agent1.beginner_pool_potential()
+
+    assert margin>0

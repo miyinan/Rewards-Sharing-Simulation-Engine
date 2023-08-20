@@ -16,7 +16,7 @@ def main():
         beta=args.beta,
         alpha=args.alpha,
         stake_distr_source=args.stake_distr_source,
-        agent_profile_distr=args.agent_profile_distr,
+        agent_profile=args.agent_profile,
         inactive_stake_fraction=args.inactive_stake_fraction,
         inactive_stake_fraction_known=args.inactive_stake_fraction_known,
         relative_utility_threshold=args.relative_utility_threshold,

@@ -13,7 +13,7 @@ from mesa.time import BaseScheduler, SimultaneousActivation, RandomActivation
 from logic.activations import SemiSimultaneousActivation
 import logic.helper as hlp
 import logic.model_reporters as reporters
-from logic.stakeholder_eth import EthStakeholder
+from logic.stakeholder_eth import EthStakeholder_hard, EthStakeholder_easy
 from logic.reward_schemes import Ethereum
 import logic.liquid_contract as lc
 
@@ -206,6 +206,7 @@ class Simulation(Model):
         self.id_seq = 0
 
     def get_next_pool_id(self):
+        print("get_next_pool_id")
         self.id_seq += 1
         return self.id_seq
 
@@ -465,12 +466,12 @@ class Simulation(Model):
 
 class Ethereum_Sim(Model):
     def __init__(
-            self,n=100,beta=0.001,alpha=0.00008,stake_distr_source='Pareto', agent_profile_distr=None, 
+            self,n=100,beta=0.001,alpha=0.00008,stake_distr_source='Pareto', agent_profile=None, 
             inactive_stake_fraction=0, inactive_stake_fraction_known=False, relative_utility_threshold=0,
             absolute_utility_threshold=0, seed=None, pareto_param=2.0, max_iterations=1000, cost_min=0,
             cost_max=1e-4, extra_pool_cost_fraction=0.4, agent_activation_order="semisimultaneous",
             iterations_after_convergence=10, reward_scheme=0, execution_id='', seq_id=-1, parent_dir='',
-            metrics=None, generate_graphs=True, input_from_file=False):
+            metrics=None, generate_graphs=True, input_from_file=False,liquidity=0.1):
         args={}
         args.update(locals())
         args.pop('self')
@@ -480,8 +481,8 @@ class Ethereum_Sim(Model):
         
         if args['metrics'] is None:
             args['metrics'] = [1, 2,3,32,35, 36,6, 9, 12,17, 18, 20,31,33,34,37]
-        if args['agent_profile_distr'] is None: 
-            args['agent_profile_distr'] = [1, 0, 0] # all non-myopic-agents
+        if args['agent_profile'] is None: 
+            args['agent_profile'] = 'hard' # all non-myopic-agents
         
         self.seed = args['seed']
         if self.seed is None:
@@ -515,7 +516,7 @@ class Ethereum_Sim(Model):
         
         other_fields = [
             'n', 'alpha', 'beta', 'relative_utility_threshold', 'absolute_utility_threshold', 'max_iterations',
-            'extra_pool_cost_fraction', 'agent_activation_order', 'generate_graphs'
+            'extra_pool_cost_fraction', 'agent_activation_order', 'generate_graphs','liquidity'
         ]
         multi_phase_params = {}
         for field in other_fields:
@@ -544,17 +545,17 @@ class Ethereum_Sim(Model):
         self.pool_rankings = SortedList([None] * ( self.n),
                                         key=hlp.pool_comparison_key)  # all pools ranked from best to worst non-myopically
 
-        total_stake = self.initialize_agents(
-            args['agent_profile_distr'], args['cost_min'], args['cost_max'], args['pareto_param'],
+        total_stake_init = self.initialize_agents(
+            args['agent_profile'], args['cost_min'], args['cost_max'], args['pareto_param'],
             args['stake_distr_source'].lower(), seed=self.seed
         )
-        if total_stake <= 0:
+        if total_stake_init <= 0:
             raise ValueError('Total stake must be > 0')
 
-        if total_stake != 1:
+        if total_stake_init != 1:
             # normalize stake values so that they are expressed as relative stakes
-            total_stake = self.normalize_agent_stake(total_stake)
-        self.total_stake = total_stake
+            total_stake_init = self.normalize_agent_stake(total_stake_init)
+        self.total_stake = total_stake_init
         self.export_initial_state_desc_file(self.seed)
         self.consecutive_idle_steps = 0  # steps towards convergence
         self.current_step_idle = True
@@ -574,10 +575,17 @@ class Ethereum_Sim(Model):
         self.equilibrium_steps = []
         self.pivot_steps = []
         self.generate_graphs = args['generate_graphs']
+        self.total_stake = self.update_used_stake()
 
 
+    def update_used_stake(self):
+        '''
+        This methods updates the total stake used in delegation and pledge, by summing the stake of all pools.
+        '''
+        self.used_stake = sum(pool.stake for pool in self.pools.values())
+        return self.used_stake
         
-    def initialize_agents(self, agent_profile_distr, cost_min, cost_max, pareto_param, stake_distr_source, seed):
+    def initialize_agents(self, agent_profile, cost_min, cost_max, pareto_param, stake_distr_source, seed):
         if stake_distr_source == 'file':
             stake_distribution = hlp.read_stake_distr_from_file(num_agents=self.n)
         elif stake_distr_source == 'pareto':
@@ -595,15 +603,26 @@ class Ethereum_Sim(Model):
         cost_distribution = hlp.generate_cost_distr_unfrm(num_agents=self.n, low=cost_min, high=cost_max, seed=seed)
 
         # Initialize the agents
-        for i in range(self.n):
-            agent = EthStakeholder(
+        if agent_profile =='hard':
+            for i in range(self.n):
+                agent = EthStakeholder_hard(
                 unique_id=i,
                 model=self,
                 stake=stake_distribution[i],
                 cost=cost_distribution[i],
                 strategy=None
-            )
-            self.schedule.add(agent)
+                )
+                self.schedule.add(agent)
+        if agent_profile =='easy':
+            for i in range(self.n):
+                agent = EthStakeholder_easy(
+                unique_id=i,
+                model=self,
+                stake=stake_distribution[i],
+                cost=cost_distribution[i],
+                strategy=None
+                )
+                self.schedule.add(agent)
         return total_stake
     
     def normalize_agent_stake(self, total_stake):
