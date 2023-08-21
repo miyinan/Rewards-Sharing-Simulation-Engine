@@ -36,8 +36,8 @@ def test_close_pool():
 def test_calculate_cost_by_pool_num():
     model=Ethereum_Sim(beta=2,alpha=1,n=100,extra_pool_cost_fraction=0.4)
     agent = EthStakeholder_hard(unique_id=1, model=model, stake=0.1, cost=0.001)
-    cost = agent.calculate_cost_by_pool_num(1)
-    cost2=agent.calculate_cost_by_pool_num(2)
+    cost = agent.calculate_cost_per_pool(1)
+    cost2=agent.calculate_cost_per_pool(2)
 
     assert cost == pytest.approx(0.001, abs=1e-6)
     assert cost2 == pytest.approx((0.001+0.001*0.4)/2, abs=1e-6)

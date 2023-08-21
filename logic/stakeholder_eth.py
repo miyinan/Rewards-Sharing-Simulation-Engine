@@ -3,6 +3,7 @@ from copy import deepcopy
 import heapq
 import math
 import random
+import numpy as np
 
 import logic.helper as hlp
 import logic.helper as hlp
@@ -30,6 +31,7 @@ class EthStakeholder(Agent):
         if self.new_strategy is not None:
             # The agent has changed their strategy, so now they have to execute it
             self.execute_strategy()
+            self.model.current_step_idle = False
     
     def advance(self):
         if self.new_strategy is not None:
@@ -144,7 +146,9 @@ class EthStakeholder(Agent):
             is_private=pool.is_private
         )
 
-    def calculate_cost_by_pool_num(self,pool_num):
+    def calculate_cost_per_pool(self,pool_num):
+        if pool_num==0:
+            return self.cost
         cost = self.cost+self.model.extra_pool_cost_fraction*self.cost*(pool_num-1)
         return cost/pool_num  
     
@@ -378,7 +382,7 @@ class EthStakeholder_easy(EthStakeholder):
                     break
                 # if stake_left is not enough for the cheapest contract, then return the strategy 
         
-        cost=self.calculate_cost_by_pool_num(sum(pool_num_list)+len(solo_pool_num))
+        cost=self.calculate_cost_per_pool(sum(pool_num_list)+len(solo_pool_num))
 
         for i in range(1,len(pool_num_list)):
             while pool_num_list[i]>0:
@@ -425,8 +429,9 @@ class EthStakeholder_hard(EthStakeholder):
 
         # operator Utility
         operator_strategy = self.choose_pool_operation()
-        operator_utility = self.calculate_utility_given_strategy(operator_strategy)
-        if operator_strategy is not None:
+        #determin if operator_strategy is list object
+        if not isinstance(operator_strategy.stake_allocations,list) and operator_strategy is not None:
+            operator_utility = self.calculate_utility_given_strategy(operator_strategy)
             possible_moves["operator"] = (operator_utility,operator_strategy)
 
         # Maximize Utility strategy
@@ -461,8 +466,8 @@ class EthStakeholder_hard(EthStakeholder):
             
 
     def choose_pool_operation_beginner(self,stake_left):
-        draft_owned_pools={}
-        allocations={}
+        draft_owned_pools=dict()
+        allocations=dict()
         margin_0=self.beginner_pool_potential()
         # have potential to open solo pool
         if margin_0==0: 
@@ -470,7 +475,7 @@ class EthStakeholder_hard(EthStakeholder):
             pool=Pool(
                     pool_id=pool_id,
                     cost=self.cost,
-                    pledge=self.model.alpha,
+                    pledge=min(self.stake,self.model.beta),
                     owner=self.unique_id,
                     reward_scheme=self.model.reward_scheme,
                     margin=0,
@@ -479,12 +484,11 @@ class EthStakeholder_hard(EthStakeholder):
             draft_owned_pools[pool_id]=pool
             stake_left-=pool.pledge
             allocations = self.find_allocation_move(stake_left) 
-
         # have potential to open liquid pool
         if margin_0>0: 
             liquid_pool_num=min(math.floor(1/liquid_staking().min_pledge_factor),math.floor(stake_left/liquid_staking().prerequisite(self.model.alpha))) #open pool
             margin_list=self.find_margin(margin_0,liquid_pool_num)
-            cost=self.calculate_cost_by_pool_num(liquid_pool_num)
+            cost=self.calculate_cost_per_pool(liquid_pool_num)
             pledge=liquid_staking().get_min_pledge(self.model.alpha)
             for margin in margin_list:
                 pool_id = self.model.get_next_pool_id()
@@ -510,7 +514,7 @@ class EthStakeholder_hard(EthStakeholder):
         1. liquid pool (+1,+2,-1,-2) 2. solo pool (+1,-1) 3. recalculate margin(0)
         '''
         draft_owned_pools={}
-        owned_pools_keep=[pool for pool in self.strategy.owned_pools.values() if pool.stake>self.model.alpha] 
+        owned_pools_keep=[pool for pool in self.strategy.owned_pools.values() if pool.stake>self.model.alpha]
         #count how many pools are liquid pools and how many are solo pools
         current_liquid_pool=[pool for pool in owned_pools_keep if pool.is_private==False]
         current_solo_pool=[pool for pool in owned_pools_keep if pool.is_private==True]
@@ -577,9 +581,14 @@ class EthStakeholder_hard(EthStakeholder):
         return: a dict:{utility,solo_pool_num,liquid_pool_num,margin_for_liquid_pool,allocation,cost}
         during this process, no draft pool is created, no allocation is made.
         '''
+
         liquid_pool_num=current_liquid_pool_num+option[0]
         solo_pool_num=current_solo_pool_num+option[1]
-        cost_per_pool=self.calculate_cost_by_pool_num(liquid_pool_num+solo_pool_num)
+        cost_per_pool=self.calculate_cost_per_pool(liquid_pool_num+solo_pool_num)
+        #chekc if the agents have enough stake to do certain option
+        if self.stake<self.model.alpha*(solo_pool_num+liquid_pool_num*liquid_staking().min_pledge_factor):
+            return {'utility':0,'solo_pool_num':0,'liquid_pool_num':0,'margin_for_liquid_pool':[],'allocation':[],'cost':0}
+
         margin_0=min(self.profit_than_delegate_margin(liquid_staking(),c=cost_per_pool),self.profit_than_solo_margin(liquid_staking(),c=cost_per_pool))
         margin_for_liquid_pool=self.find_margin(margin_0,liquid_pool_num)
         
@@ -599,6 +608,8 @@ class EthStakeholder_hard(EthStakeholder):
         #after adding liquid pools, calculate utility for solo pools. Agents will try to add more pledge in it to get more rewards, so pledge is min(stake_left/num,beta)
         if solo_pool_num!=0:
             stake_per_solo_pool=min(stake_left/solo_pool_num,self.model.beta)# they can not add too much pledge in solo pool, it will saturated
+            if stake_per_solo_pool<self.model.alpha:
+                return {'utility':0,'solo_pool_num':0,'liquid_pool_num':0,'margin_for_liquid_pool':[],'allocation':[],'cost':0}
             solo_utility = hlp.calculate_operator_utility_from_pool_with_liquidity(
                 reward_scheme=self.model.reward_scheme,
                 pool_stake=self.model.alpha,
@@ -669,7 +680,7 @@ class EthStakeholder_hard(EthStakeholder):
         It is used to calculate the margin of the new liquid pools. With given input, it will return margin_0.
         With margin_0, it stands that operate a liquid pool is equal profit than delegate.
         '''
-        if c==None:
+        if c==None or np.isinf(c):
             c=self.cost
         p=liquid_staking.min_pledge_factor
         i =liquid_staking.insurance_factor
@@ -677,6 +688,20 @@ class EthStakeholder_hard(EthStakeholder):
         R=self.model.reward_scheme.TOTAL_EPOCH_REWARDS_R
         a=self.model.alpha
         T=self.model.total_stake
+        if np.isnan(c):
+            print("Variable c contains NaN ")
+        if np.isinf(c):
+            print("Variable c contains inf values")
+        if np.isnan(T) or np.isinf(T):
+            print("Variable T contains NaN or inf values")
+        if np.isnan(R) or np.isinf(R):
+            print("Variable R contains NaN or inf values")
+        if np.isnan(a) or np.isinf(a):
+            print("Variable a contains NaN or inf values")
+        if np.isnan(i) or np.isinf(i):
+            print("Variable i contains NaN or inf values")
+        if np.isnan(l) or np.isinf(l):
+            print("Variable l contains NaN or inf values")
         margin_0=c*T/(R*a*(1+i)*(1-p)) + i/(1+i)
         return margin_0
 
@@ -694,6 +719,19 @@ class EthStakeholder_hard(EthStakeholder):
         T=self.model.total_stake
         y=self.model.extra_pool_cost_fraction
 
+        if np.isnan(y) or np.isinf(y):
+            print("Variable y contains NaN or inf values")
+        if np.isnan(T) or np.isinf(T):
+            print("Variable T contains NaN or inf values")
+        if np.isnan(R) or np.isinf(R):
+            print("Variable R contains NaN or inf values")
+        if np.isnan(a) or np.isinf(a):
+            print("Variable a contains NaN or inf values")
+        if np.isnan(i) or np.isinf(i):
+            print("Variable i contains NaN or inf values")
+        if np.isnan(l) or np.isinf(l):
+            print("Variable l contains NaN or inf values")
+
         margin_0=c*y*T/(R*a)-i*l
 
         if margin_0<0:
@@ -707,6 +745,7 @@ class EthStakeholder_hard(EthStakeholder):
         '''
         margin =[] 
         boost = random.uniform(1e-3, 1e-2)# to ensure that the new desirability will be higher than the target one
+        #boost=1e-2
 
         fixed_pools_ranked = [pool 
                               for pool in self.model.pool_rankings

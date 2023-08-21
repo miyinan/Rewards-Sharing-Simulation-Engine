@@ -407,10 +407,10 @@ def calculate_HHI(model):
     agents = model.schedule.agents
     pool_share=[]
     pools=model.pools
-    print("pools",pools)
+    #print("pools",pools)
     for agent in agents:
         agent_owned_pools=agent.get_owned_pools()
-        print("agent_owned_pools",agent_owned_pools)
+        #print("agent_owned_pools",agent_owned_pools)
         agent_owned_pools_stake = [pool.stake for pool in agent_owned_pools]
         agent_market_share = fsum(agent_owned_pools_stake)
         pool_share.append(agent_market_share)

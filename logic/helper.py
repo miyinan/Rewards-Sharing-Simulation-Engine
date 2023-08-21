@@ -12,7 +12,6 @@ from matplotlib import ticker
 import seaborn as sns
 import argparse
 
-from logic.stakeholder_profiles import PROFILE_MAPPING
 from logic.reward_schemes import Ethereum
 from logic.model_reporters import REPORTER_IDS
 from logic.reward_schemes import TOTAL_EPOCH_REWARDS_R
