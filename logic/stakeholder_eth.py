@@ -409,6 +409,7 @@ class EthStakeholder_easy(EthStakeholder):
                         reward_scheme=self.model.reward_scheme,
                         is_private = contract.get_is_private()
                     )
+        pool.set_insurance(contract.get_insurance(alpha))
         return pool
 
 
@@ -501,6 +502,7 @@ class EthStakeholder_hard(EthStakeholder):
                     margin=margin,
                     is_private=False
                 )
+                pool.set_insurance(liquid_staking().get_insurance(self.model.alpha))
                 draft_owned_pools[pool_id]=pool
                 stake_left-=liquid_staking().prerequisite(self.model.alpha)
             allocations = self.find_allocation_move(stake_left)
@@ -556,6 +558,7 @@ class EthStakeholder_hard(EthStakeholder):
                         margin=margin,
                         is_private=False
                 )
+                pool.set_insurance(liquid_staking().get_insurance(self.model.alpha))
                 draft_owned_pools[pool_id]=pool
         if most_optical_option['solo_pool_num']>0: #2. create solo pool
             for i in range(0,most_optical_option['solo_pool_num']):

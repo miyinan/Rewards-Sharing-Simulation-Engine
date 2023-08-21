@@ -13,10 +13,14 @@ class Pool:
         self.delegators = dict()
         self.set_profit(reward_scheme)
         self.margin = margin
+        self.insurance = 0
 
     @property
     def margin(self): 
         return self._margin
+    
+    def set_insurance(self, insurance):
+        self.insurance = insurance
 
     @margin.setter
     def margin(self, m):

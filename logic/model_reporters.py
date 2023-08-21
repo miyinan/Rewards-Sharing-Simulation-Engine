@@ -302,7 +302,7 @@ def get_cost_efficient_count(model):
     return len(positive_potential_profits)
 
 
-def get_pool_stakes_by_agent(model):
+def get_pool_stakes_by_agent(model): # this one returns a list
     num_agents = model.n
     pool_stakes = [0 for _ in range(num_agents)]
     current_pools = model.get_pools_list()
@@ -311,7 +311,7 @@ def get_pool_stakes_by_agent(model):
     return pool_stakes
 
 
-def get_pool_stakes_by_agent_id(model):
+def get_pool_stakes_by_agent_id(model): # this one returns a dict
     num_agents = model.n
     pool_stakes = {i: 0 for i in range(num_agents)}
     current_pools = model.get_pools_list()
@@ -377,8 +377,7 @@ def get_gini_id_coeff_stake_k_agents(model):
 
 def get_total_delegated_stake(model):
     pools = model.get_pools_list()
-    del_stake = fsum([pool.stake for pool in pools])
-    total_stake = fsum([agent.stake for agent in model.schedule.agents])
+    del_stake = fsum([pool.stake-pool.pledge for pool in pools])
     return del_stake
 
 
@@ -393,10 +392,18 @@ def get_stake_distr_stats(model):
 
 
 def get_operator_count(model):
-    return len({pool.owner for pool in model.get_pools_list()})
+    counted_owners = set()  # Create a set to track counted owners
+    unique_owners = 0  # Initialize the count of unique owners
+
+    for pool in model.get_pools_list():
+        if pool.owner not in counted_owners:
+            counted_owners.add(pool.owner)  # Add the owner to the set
+            unique_owners += 1  # Increment the count
+
+    return unique_owners  # Return the count of unique owners
 
 
-def get_total_stake(model):
+def get_total_pool_stake(model):
     current_pools = model.get_pools_list()
     if len(current_pools) == 0:
         return 0
@@ -440,9 +447,16 @@ def get_unused_stake(model):
     total_delegate=get_total_delegate(model)
     return total_stake-total_pledge-total_delegate
 
+def get_insurance_stake(model):
+    pools=model.get_pools_list()
+    total_insurance=0
+    for pool in pools:
+        total_insurance+=pool.insurance
+    return total_insurance
+
 def get_liquidity_gain_percent(model):
     total_delegate=get_total_delegate(model)
-    total_stake=get_total_stake(model)
+    total_stake=fsum([pool.stake for pool in model.get_pools_list()])
     total_delegate*model.liquidity
     if total_stake==0:
         return 0
@@ -452,85 +466,66 @@ def get_liquidity_gain_percent(model):
 
 
 
-
-
 ALL_MODEL_REPORTEERS = {
-    "Contract type": get_contract_type,
-    "Pool count": get_number_of_pools,
+    #stakes
     "Total pledge": get_total_pledge,
     "Mean pledge": get_avg_pledge,
     "Median pledge": get_median_pledge,
+    "Pledge rate": get_pledge_rate,
+    "Total delegated stake": get_total_delegated_stake,
+    "Total pool stake": get_total_pool_stake,
+     "Total insurance": get_insurance_stake,
+    
+    #operators
+    "Operator count": get_operator_count,
     "Average pools per operator": get_avg_pools_per_operator,
     "Max pools per operator": get_max_pools_per_operator,
     "Median pools per operator": get_median_pools_per_operator,
+    "Cost efficient stakeholders": get_cost_efficient_count,
+    
+
+    #decentralization
     "Nakamoto coefficient": get_nakamoto_coefficient,
     "Statistical distance": get_controlled_stake_distr_stat_dist,
     "Min-aggregate pledge": get_min_aggregate_pledge,
-    "Pledge rate": get_pledge_rate,
     "Pool homogeneity factor": get_homogeneity_factor,
-    "Iterations": get_iterations,
-    "Mean stake rank": get_avg_stk_rnk,
-    "Mean cost rank": get_avg_cost_rnk,
-    "Median stake rank": get_median_stk_rnk,
-    "Median cost rank": get_median_cost_rnk,
-    "Number of pool splitters": get_pool_splitter_count,
-    "Cost efficient stakeholders": get_cost_efficient_count,
-    "Gini-id": get_gini_id_coeff_pool_count,
-    "Gini-id stake": get_gini_id_coeff_stake,
-    "Gini-id stake (k)": get_gini_id_coeff_stake_k_agents,
+    "HHI": calculate_HHI,
+    "Gini-agent coefficient": get_gini_id_coeff_pool_count,
+    "Gini-agent stake coefficient": get_gini_id_coeff_stake,
+    
+    #other
+    "Pool count": get_number_of_pools,
     "Mean margin": get_avg_margin,
     "Median margin": get_median_margin,
-    "Stake per agent": get_pool_stakes_by_agent,
-    "Stake per agent id": get_pool_stakes_by_agent_id,
-    "StakePairs": get_stakes_n_margins,
-    "Total delegated stake": get_total_delegated_stake,
-    "Total agent stake": get_active_stake_agents,
-    "Operator count": get_operator_count,
-    "Total stake": get_total_stake,
-    "HHI": calculate_HHI,
+    "Liquidity Gain percent": get_liquidity_gain_percent,
     "Total cost":get_total_cost,
-    "Total delegate": get_total_delegate,
-    "Total Unused Stake":get_unused_stake,
-    "Liquidity Gain percent": get_liquidity_gain_percent
+    "Iterations": get_iterations,
 }
 
 REPORTER_IDS = {
-    1: "Contract type",
-    2: "Pool count",
-    3: "Total pledge",
-    4: "Mean pledge",
-    5: "Median pledge",
-    6: "Average pools per operator",
-    7: "Max pools per operator",
-    8: "Median pools per operator",
-    9: "Nakamoto coefficient",
-    10: "Statistical distance",
-    11: "Min-aggregate pledge",
-    12: "Pledge rate",
-    13: "Pool homogeneity factor",
-    14: "Iterations",
-    15: "Mean stake rank",
-    16: "Mean cost rank",
-    17: "Median stake rank",
-    18: "Median cost rank",
-    19: "Number of pool splitters",
-    20: "Cost efficient stakeholders",
-    21: "Gini-id",
-    22: "Gini-id stake",
-    23: "Gini-id stake (k)",
-    24: "Mean margin",
-    25: "Median margin",
-    26: "Stake per agent",
-    27: "Stake per agent id",
-    28: "StakePairs",
-    29: "Total delegated stake",
-    30: "Total agent stake",
-    31: "Operator count",
-    32: "Total stake",
-    33: "HHI",
-    34: "Total cost",
-    35: "Total delegate",
-    36: "Total Unused Stake",
-    37: "Liquidity Gain percent"
+    1: "Total pledge",
+    2: "Mean pledge",
+    3: "Median pledge",
+    4: "Pledge rate",
+    5: "Total delegated stake",
+    6: "Total pool stake",
+    7: "Total insurance",
+    8: "Operator count",
+    9: "Average pools per operator",
+    10: "Max pools per operator",
+    11: "Median pools per operator",
+    12: "Cost efficient stakeholders",
+    13: "Nakamoto coefficient",
+    14: "Statistical distance",
+    15: "Min-aggregate pledge",
+    16: "Pool homogeneity factor",
+    17: "HHI",
+    18: "Gini-agent coefficient",
+    19: "Gini-agent stake coefficient",
+    20: "Pool count",
+    21: "Mean margin",
+    22: "Median margin",
+    23: "Liquidity Gain percent",
+    24: "Total cost",
+    25: "Iterations"
 }
-

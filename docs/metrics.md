@@ -1,46 +1,137 @@
 # Metrics
 
-There are several metrics, or model reporters, that can be tracked during a simulation. Each of them is associated with 
-an id for convenience. We provide details for all of them below:
+There are several metrics, or model reporters, that can be tracked during a simulation. Each of them is associated with an id for convenience. We provide details for all of them below.
 
-1. **Pool count**: the number of active pools in the system.
-2. **Total pledge**: the total pledged stake of the system (sum of all pools' pledges).
-3. **Mean pledge**: the average value of stake that is pledged in pools.
-4. **Median pledge**: the median value of stake that is pledged in pools.
-5. **Average pools per operator**: the average number of pools that an operator controls.
-6. **Max pools per operator**: the maximum number of pools that an operator controls.
-7. **Median pools per operator**: the median number of pools that an operator controls.
-8. **Average saturation rate**: the average saturation rate (stake / saturation threshold) across all active pools.
-9. **Nakamoto coefficient**: the minimum number of entities that collectively control more than 50% of the system's 
-     active stake through their pools.
-10. **Statistical distance**: the [statistical distance](https://en.wikipedia.org/wiki/Statistical_distance) of the 
-    distributions of the stake that agents controlled at the beginning of the simulation vs on this round.
-11. **Min-aggregate pledge**: the minimum aggregate pledge of pools that collectively control more than 50% of the 
-    system's active stake. Note that the calculation of this metric is slow because of the complexity of the problem.
-12. **Pledge rate**: the fraction of active stake that is used as pledge (total pledge / total active stake).
-13. **Pool homogeneity factor**: a metric that describes how homogeneous the pools of the system are (the highest 
-    possible value is 1, which is given when all pools have the same size).
-14. **Iterations**: the number of iterations that the simulation has gone through.
-15. **Mean stake rank**: the average rank of pool operators regarding their initial stake.
-16. **Mean cost rank**: the average rank of pool operators regarding their initial cost.
-17. **Median stake rank**: the median rank of pool operators regarding their initial stake.
-18. **Median cost rank**: the median rank of pool operators regarding their initial cost.
-19. **Number of pool splitters**: the number of stakeholders that operate two or more pools.
-20. **Cost efficient stakeholders**: the number of agents for whom it is possible to make profit by operating a pool.
-21. **StakePairs**: a mapping of each pool id to its stake and profit margin.
-22. **Gini-id**: a variation of the gini coefficient, where we consider each agent as an “id” and each pool as a “coin”. 
-    Then the gini-id is the gini coefficient considering each party with the coins they have.  In case of each agent 
-    operating one pool this coefficient is 0.
-23. **Gini-id stake**: like the gini-id above, but considering the total stake each agent controls through their pools 
-    instead of the number of pools they operate.
-24. **Mean margin**: the average profit margin across all active pools.
-25. **Median margin**: the median profit margin across all active pools.
-26. **Stake per agent**: a list where each element corresponds to the total stake controlled through an agent's pool for 
-    some agent
-27. **Stake per agent id**: a mapping of each agent id to the total stake that said agent controls through their pools.
-28. **Total delegated stake**: the total stake delegated to active pools (including pledged stake).
-29. **Total agent stake**: the total stake held by agents.
-30. **Operator count**: the number of stakeholders that operate pools.
+## Stake
 
-Refer to the [Configuration](configuration.md) page for details on specifying which metrics will be used during a 
-simulation.
+All the value should be below 1. Total initial stake is uniformed ito 1. In each round, the sum of all stake owned by agents in this simulation is 1.
+
+**Total pledge:**  id=1
+
+the total pledge stake of the system, by summing of all pools' pldege
+
+**Mean pledge**: id=2
+
+the average value of stake that is pledged in pools.
+
+**Median pledge**: id=3
+
+the median value of stake that is pledged in pools.
+
+**Pledge rate: **id=4
+
+ the fraction of active stake that is used as pledge (total pledge / total active stake).
+
+**Total delegated stake** id=5
+
+the sum of all delegated assets. If all pools are solo/private, then total_delegated_stake=0.
+
+ `total_delegated_stake=sum(pool.stake-pool.pledge)`
+
+**Total pool stake:** id=6
+
+the sum of all used stake: delegation+ pledge.  Liquid pool insurance not included.
+
+**Total insurance stake:** id=7
+
+the sume of all used stake as insurance. when a operator want to open a liquidity pool, they need certain amount of stake as insurance. This will generate liquidity gain.
+
+
+
+## Operator
+
+Only investigate into operator, doesn't take delegator agents into account. For example. average pools per operator will alwasy be positive
+
+**Operator count:** id=8, the number of unique stakeholders that operate pools. If a operator operates two pools, it won't count it twice
+
+**Average pools per operator**: id=9
+
+the average number of pools that an operator controls.
+
+**Max pools per operator**: id=10
+
+the maximum number of pools that an operator controls.
+
+**Median pools per operator**: id=11
+
+the median number of pools that an operator controls.
+
+**Cost efficient stakeholders**: id=12
+
+the number of agents for whom it is possible to make profit by operating a pool. There reward is bigger than cost.
+
+
+## Decentralization
+
+**Nakamoto coefficient**: id=13
+
+ the minimum number of entities that collectively control more than 50% of the system's active stake through their pools.
+
+**Statistical distance:** id=14
+
+the [statistical distance](https://en.wikipedia.org/wiki/Statistical_distance) of the distributions of the stake that agents controlled at the beginning of the simulation vs on this round. reflects the extent of change in stake distribution and can be used to analyze the impact of the process on agent behavior and decision-making. To note that in this simulation reward don't conpond with each round, so their stake will not change. The meaning Controlled stake means stake in opertaor's pool. For example, a agent owns 2 pools, then stake under controlled will be the sum of two pools's stake. Doesn't take agent's own stake into account.
+
+**Min-aggregate pledge**: id=15
+
+the minimum aggregate pledge of pools that collectively control more than 50% of the system's active stake. Note that the calculation of this metric is slow because of the complexity of the problem. This metrix is useful in cardano, but not in ethereum, because liquid pools can not choose their pledge.
+
+**Pool homogeneity factor**: id =16
+
+A metric that describes how homogeneous the pools of the system are (the highest possible value is 1, which is given when all pools have the same size).
+
+so max_stake in pool list will also be average_stake in pool list,
+
+`ideal area = pool_count*max_stake`, `actual area = sum( pool stake )`
+
+`homogeneity_factor= actual_area/ideal_area`
+
+**HHI agent:** id=17
+
+The Herfindahl-Hirschman Index (HHI) is a metric used to measure market concentration or industry concentration. It provides insights into the distribution of firm sizes within a market, offering information about market competition and economic concentration. We consider each agent as one firm. In a simulation of `n` agents, the value is between `[1/n,1]` Lower HHI values indicate a more decentralized and competitive market `(1/n)^2*n=1/n`, while higher HHI values suggest greater market concentration and dominance by a few large firms `1^2**1+0^2*(n-1)=1`.
+
+`agent_controlled_stake_share=agent_controlled stake/total_pool_stake`
+
+`HHI_agent= sum(agent_controlled_stake_share**2)`
+
+**Gini agent coefficient:** id=18
+
+a variation of the gini coefficient, where we consider each agent as an individual and each pool as a “coin”. Then the gini-agent is the gini coefficient considering each indiviual with the pools they have. In case of each agent operating one pool this coefficient is 0. 100% agents control 100%pools, 5% agents control 5% pools
+
+**Gini agent stake coefficient:** id=19
+
+like the gini agent coefficient above, it is the gini coefficient of each agents with the total stake each agent controls through their pools instead of the number of pools they operate.
+
+
+
+
+## Other
+
+**Pool count:**  id=20
+
+the number of active pools in the system. Including Liquid Pools and Solo Pool
+
+**Mean margin:** id= 21
+
+the average profit margin across all active pools.
+
+**Median margin:** id= 22
+
+the median profit margin across all active pools.
+
+**Total Liquidity Gain**:  id=23
+
+is the liquidity gain by using liquidity staking protocols, it comes from operator's insurance and delegator's delegation.  `total_liquidity_gain = total_liquidity_reward/TOTAL_REWARD_PER_EPOCH`
+
+it should always be smaller than `TOTAL_REWARD_PER_EPOCH/liquidity_factor`
+
+**Total cost:** id=24
+
+the sum of cost of all pools in this simulation. `sum(pool.cost)`
+
+**Iterations** : id =25
+
+the number of iterations that the simulation has gone through.
+
+
+
+Refer to the [Configuration](configuration.md) page for details on specifying which metrics will be used during a simulation.

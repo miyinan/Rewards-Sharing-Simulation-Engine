@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+<title>Examples - Rewards Sharing Simulation Engine for Ethereum - Docs</title>
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+<meta name="generator" content="mkdocs-1.5.2, mkdocs-gitbook-1.0.7">
+
+<link rel="shortcut icon" href="../images/favicon.ico" type="image/x-icon">
+<meta name="HandheldFriendly" content="true"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta rel="next" href="" />
+<link href="../css/style.min.css" rel="stylesheet"> 
+</head>
+
+<body>
+<div class="book">
+<div class="book-summary">
+
+<nav role="navigation">
+<ul class="summary">
+<li>
+<a href=".." target="_blank" class="custom-link">Rewards Sharing Simulation Engine for Ethereum - Docs</a>
+</li>
+<li class="divider"></li>
+<li class="chapter" data-path="">
+<a href="..">Home</a>
+<li class="chapter" data-path="configuration/">
+<a href="../configuration/">Configuration</a>
+<li class="chapter" data-path="metrics/">
+<a href="../metrics/">Metrics</a>
+<li class="chapter active" data-path="examples/">
+<a href="./">Examples</a>
+<li class="divider"></li>
+
+
+
+<li><a href="http://www.mkdocs.org">
+Published with MkDocs
+</a></li>
+
+<li><a href="https://github.com/GitbookIO/theme-default">
+Theme by GitBook
+</a></li>
+</ul>
+
+</nav>
+
+</div> <!-- end of book-summary -->
+
+<div class="book-body">
+<div class="body-inner">
+<div class="book-header" role="navigation">
+
+<!-- Title -->
+<h1>
+<i class="fa fa-circle-o-notch fa-spin"></i>
+<a href="." ></a>
+</h1>
+
+</div> <!-- end of book-header -->
+
+<div class="page-wrapper" tabindex="-1" role="main">
+<div class="page-inner">
+
+<section class="normal markdown-section">
+
+
+
+<h1 id="examples">Examples</h1>
+<p>Here, we provide some examples that can help better understand the capacities of the simulation engine. Note that in all examples below, we assume that the <code>python</code> command corresponds to a Python 3.9 installation and that the commands are executed from the root directory of the project. Recall that when an argument is not set explicitly then its default value is used.</p>
+<h2 id="single-runs">Single runs</h2>
+<p>Run with 1000 agents, alpha = 1 and beta=2:</p>
+<pre><code>python main.py --n=1000 --alpha=1 --beta=2 --execution_id=baseline
+</code></pre>
+<p>Run with two phases, first with n = 100 and then n = 200, others configurations keep default:</p>
+<pre><code>python main.py --n 100 200 --execution_id=increasing-n
+</code></pre>
+<p>Run with 3,000 agents, alpha = 1 and a specified seed (42):</p>
+<pre><code>python main.py --n=3000 --alpha=1 --seed=42 --execution_id=n-3000-alpha-1-seed-42
+</code></pre>
+<p>Run with agents in hard mood where they can choose margin:</p>
+<pre><code>python main.py --agent_profile=hard
+</code></pre>
+<p>Run with agents in hard mood where they don't have liquidity reward by holding LSD(liquid staking tokens):</p>
+<pre><code>python main.py --liquidity=0
+</code></pre>
+<h2 id="batch-runs">Batch runs</h2>
+<p>In batch runs, when multiple values are provided for an argument then multiple simulation instances are created, one for each combination of the variable arguments.</p>
+<p>Batch run with 1000 agents and 5 different values for beta (1.0 1.5 2.0):</p>
+<pre><code>python batch-run.py --n=1000 --beta 1.0 1.5 2.0 --execution_id=batch-run-varying-beta
+</code></pre>
+<p>Batch run with 1000 agents, alpha = 2.0 and 3 different values for beta (1.0, 1.1, 1.2):</p>
+<pre><code>python batch-run.py --n=1000 --beta=2.0 --alpha 1 1.1 1.2 --execution_id=batch-run-varying-a0
+</code></pre>
+<p>Batch run with two variables, using 3 values for beta and 3 values for alpha (total of 9 combinations):</p>
+<pre><code>python batch-run.py --n=500 --k  1.5 2 --alpha 1.0 1.5 --execution_id=batch-run-varying-k-a0-3x3
+</code></pre>
+
+
+</section>
+
+</div> <!-- end of page-inner -->
+</div> <!-- end of page-wrapper -->
+
+</div> <!-- end of body-inner -->
+
+</div> <!-- end of book-body -->
+<script src="../js/main.js"></script>
+<script src="../js/gitbook.min.js"></script>
+<script src="../js/theme.min.js"></script>
+</body>
+</html>

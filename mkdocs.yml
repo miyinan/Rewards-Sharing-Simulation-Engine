@@ -1,9 +1,8 @@
-site_name: Rewards Sharing Simulation Engine - Docs
+site_name: Rewards Sharing Simulation Engine for Ethereum - Docs
 nav:
         - Home: index.md
-        - Setup: setup.md
         - Configuration: configuration.md
         - Metrics: metrics.md
         - Examples: examples.md
-        - Output: output.md
-theme: readthedocs
+theme: gitbook
+plugins: []

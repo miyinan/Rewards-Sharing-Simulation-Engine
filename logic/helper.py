@@ -591,12 +591,12 @@ def fraction(value):
         raise argparse.ArgumentTypeError("invalid fraction value: {}".format(value))
     return float_value
 
-def calculate_hhi(pool_stake):
-    total_stake = sum(pool_stake)
+def calculate_hhi(agent_controlled_stake):
+    total_stake = sum(agent_controlled_stake)
     if total_stake == 0:
         return 0
-    pool_shares = [quantity / total_stake for quantity in pool_stake]
-    hhi = sum(pool_**2 for pool_ in pool_shares)
+    agent_shares = [quantity / total_stake for quantity in agent_controlled_stake]
+    hhi = sum(agent_**2 for agent_ in agent_shares)
     return hhi
 
 
@@ -611,7 +611,7 @@ def add_script_arguments(parser):
     adjusted during the course of the simulation, such as k.
     @param parser: an argparse.ArgumentParser object
     """
-    parser.add_argument('--n', nargs="?", type=positive_int, default=100,
+    parser.add_argument('--n', nargs="?", type=positive_int, default=1000,
                         help='The number of agents (natural number). Default is 1000.')
     parser.add_argument('--beta', nargs="+", type=positive_float, default=2,
                         help='The maximum effective balance of ethereum staking')
@@ -655,17 +655,15 @@ def add_script_arguments(parser):
     parser.add_argument('--inactive_stake_fraction_known', type=bool, default=False,
                         action=argparse.BooleanOptionalAction,
                         help='Is the inactive stake fraction of the system known beforehand? Default is no.')
-    
 
-
-    parser.add_argument('--iterations_after_convergence', nargs="?", type=int, default=40,  # todo maybe make constant
+    parser.add_argument('--iterations_after_convergence', nargs="?", type=int, default=10,  # todo maybe make constant
                         help='The minimum consecutive idle iterations that are required before terminations. '
                              'Default is 20.')
     parser.add_argument('--max_iterations', nargs="?", type=positive_int, default=2000,
                         help='The maximum number of iterations of the system. Default is 2000.')
     parser.add_argument('--metrics', nargs="+", type=int, default=None, choices=range(1, len(REPORTER_IDS) + 1),
                         help='The list of ids that correspond to metrics that are tracked during the simulation. Default'
-                             'is [1, 2, 3, 4, 6, 17, 18, 26, 27]')
+                             'is [20,5,6,7,8,9,13,17,19,23,24]')
     parser.add_argument('--generate_graphs', type=bool, default=True, action=argparse.BooleanOptionalAction,
                         help='If True then graphs relating to the tracked metrics are generated upon completion. Default'
                              'is True.'),

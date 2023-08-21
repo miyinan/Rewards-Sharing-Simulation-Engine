@@ -1,41 +1,50 @@
 # Examples
-Here, we provide some examples that can help better understand the capacities of the simulation engine. 
-We divide the examples in sections, depending on the type of execution (single run or batch run). Note that in all 
-examples below, we assume that the ```python``` command corresponds to a Python 3.9 installation and that the commands 
-are executed from the root directory of the project. Recall that when an argument is not set explicitly then its default 
-value is used (for all arguments and their default values see the [Configuration](configuration.md)) page).
+
+Here, we provide some examples that can help better understand the capacities of the simulation engine. Note that in all examples below, we assume that the ``python`` command corresponds to a Python 3.9 installation and that the commands are executed from the root directory of the project. Recall that when an argument is not set explicitly then its default value is used.
+
+
 
 ## Single runs
 
-Run with 1000 agents, k = 100 and a0 = 0.3: 
-    
-    python main.py --n=1000 --k=100 --a0=0.3 --execution_id=baseline
+Run with 1000 agents, alpha = 1 and beta=2:
 
-Run with two phases, first with k = 100 and then k = 200: 
+    python main.py --n=1000 --alpha=1 --beta=2 --execution_id=baseline
 
-    python main.py --k 100 200 --execution_id=increasing-k
+Run with two phases, first with n = 100 and then n = 200, others configurations keep default:
 
-Run with 3,000 agents, k = 500 and a specified seed (42):
+    python main.py --n 100 200 --execution_id=increasing-n
 
-    python main.py --n=3000 --k=500 --seed=42 --execution_id=n-3K-k-500-seed-42
+Run with 3,000 agents, alpha = 1 and a specified seed (42):
 
-Run with 50% of the agents being myopic:
+    python main.py --n=3000 --alpha=1 --seed=42 --execution_id=n-3000-alpha-1-seed-42
 
-    python main.py --agent_profile_distr 1 1 0
+Run with agents in hard mood where they can choose margin:
+
+    python main.py --agent_profile=hard
+
+Run with agents in hard mood where they don't have liquidity reward by holding LSD(liquid staking tokens):
+
+    python main.py --liquidity=0
+
+
+
+
+
 
 
 ## Batch runs
-In batch runs, when multiple values are provided for an argument then multiple simulation instances are created, one 
-for each combination of the variable arguments.
 
-Batch run with 1000 agents and 5 different values for k (100, 200, 300, 400, 500): 
+In batch runs, when multiple values are provided for an argument then multiple simulation instances are created, one for each combination of the variable arguments.
 
-    python batch-run.py --n=1000 --k 100 200 300 400 500 --execution_id=batch-run-varying-k
+Batch run with 1000 agents and 5 different values for beta (1.0 1.5 2.0):
 
-Batch run with 1000 agents, k = 100 and 3 different values for a0 (0.01, 0.1, 1): 
+    python batch-run.py --n=1000 --beta 1.0 1.5 2.0 --execution_id=batch-run-varying-beta
 
-    python batch-run.py --n=1000 --k=100 --a0 0.01 0.1 1 --execution_id=batch-run-varying-a0
+Batch run with 1000 agents, alpha = 2.0 and 3 different values for beta (1.0, 1.1, 1.2):
 
-Batch run with two variables, using 3 values for k and 3 values for a0 (total of 9 combinations):
+    python batch-run.py --n=1000 --beta=2.0 --alpha 1 1.1 1.2 --execution_id=batch-run-varying-a0
 
-    python batch-run.py --n=500 --k 50 100 150 --a0 0.05 0.1 0.3 --execution_id=batch-run-varying-k-a0-3x3
+Batch run with two variables, using 3 values for beta and 3 values for alpha (total of 9 combinations):
+
+    python batch-run.py --n=500 --k  1.5 2 --alpha 1.0 1.5 --execution_id=batch-run-varying-k-a0-3x3
+
