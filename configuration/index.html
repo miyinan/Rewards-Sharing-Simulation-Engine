@@ -36,10 +36,8 @@
 <a href="./">Configuration</a>
 <li class="chapter" data-path="metrics/">
 <a href="../metrics/">Metrics</a>
-<li class="chapter" data-path="examples.md">
-<a href="../examples.md">Examples</a>
-<li class="chapter" data-path="output.md">
-<a href="../output.md">Output</a>
+<li class="chapter" data-path="examples/">
+<a href="../examples/">Examples</a>
 <li class="divider"></li>
 
 
@@ -149,6 +147,9 @@ agent develops a new strategy whose utility does not exceed that of its current 
 <hr />
 <p><strong>--input_from_file</strong>: </p>
 <p>A flag that determines whether the input is read from a file (must be named "args.json" and be placed in the root directory of the project). If this is activated, then any other command line arguments are discarded. By default, this flag is not activated.</p>
+<hr />
+<p><strong>--liquidity:</strong></p>
+<p>The liquidity factor for calculating liquidity reward. The liquidity reward is porpotional to how many LSD tokens agents hold. In this simulation, are the reward are represent by porpotion, not actual reward. so we assume, if the reward agents get from beacon chain by holding certain amout of ETH is <code>x</code>, then by holding the same amout of LSD, agents can get <code>liquidity*x</code> reward. The default value is 0.1.</p>
 
 
 </section>
