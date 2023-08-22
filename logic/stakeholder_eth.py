@@ -27,11 +27,9 @@ class EthStakeholder(Agent):
         self.unique_id=unique_id
 
     def step(self):
+        self.model.total_stake = self.model.update_used_stake() # for apdate the total used stake on simulation engine
         self.update_strategy()
-        if self.new_strategy is not None:
-            # The agent has changed their strategy, so now they have to execute it
-            self.execute_strategy()
-            self.model.current_step_idle = False
+        self.advance()
     
     def advance(self):
         if self.new_strategy is not None:
@@ -281,7 +279,6 @@ class EthStakeholder(Agent):
         self.model.pools[pool_id] = pool
         # include in pool rankings
         self.model.pool_rankings.add(pool)
-        
 
     def close_pool(self, pool_id):
         pools = self.model.pools
@@ -477,6 +474,7 @@ class EthStakeholder_hard(EthStakeholder):
                     pool_id=pool_id,
                     cost=self.cost,
                     pledge=min(self.stake,self.model.beta),
+                    #pledge = self.model.alpha,
                     owner=self.unique_id,
                     reward_scheme=self.model.reward_scheme,
                     margin=0,
@@ -747,7 +745,7 @@ class EthStakeholder_hard(EthStakeholder):
         margin_0 is the base margin that will garanteen the new liquid pool is profitbale than delegate(or solo)
         '''
         margin =[] 
-        boost = random.uniform(1e-3, 1e-2)# to ensure that the new desirability will be higher than the target one
+        boost = random.uniform(1e-3, 1e-1)# to ensure that the new desirability will be higher than the target one
         #boost=1e-2
 
         fixed_pools_ranked = [pool 
@@ -794,3 +792,114 @@ class EthStakeholder_hard(EthStakeholder):
     
 
 
+
+class EthStakeholder_solo(EthStakeholder):
+
+    def update_strategy(self):
+        # current Utility, only matters with inertia ratio . Because it is solo only, so no delegation
+        current_stratgey=self.strategy
+        current_utility = self.calculate_current_utility()
+        # operator Utility
+        pool_operation_result = self.choose_pool_operation()
+        #print(pool_operation_result)
+        operator_strategy = pool_operation_result['strategy']
+        operator_utility = pool_operation_result['utility']
+        
+        if operator_strategy==None:
+            self.new_strategy= None
+        elif len(operator_strategy.owned_pools)==len(current_stratgey.owned_pools):
+            self.new_strategy= None
+        elif operator_utility>current_utility:
+            self.new_strategy=operator_strategy
+        
+
+
+    def choose_pool_operation(self):
+        """
+        Find a suitable pool operation strategy by using the following process
+        In solo only, agents can only open solo pool or close solo pool.
+        They simply just put all their stake to open solo pool, as many as they can 
+        """
+        result={"strategy":None,"utility":0}
+        if self.stake<self.model.alpha:
+            #print("not enought stake to open a solo pool, agent_id=",self.unique_id,self.stake,self.model.alpha)
+            return result
+        owned_pools_keep=[pool for pool in self.strategy.owned_pools.values() if pool.stake>self.model.alpha]
+        current_pool_num=len(owned_pools_keep)
+        optimal_stratgey={'pool_num':0,'utility':0,'pledge':0,'cost':self.cost}
+        
+        for i in [-1,1]:
+            if current_pool_num+i<0: continue # if operater are opening less than 1 pool, then skip to avoid divided by zero
+            if current_pool_num+i==0:
+                optimal_stratgey={'pool_num':0,'utility':0,'pledge':0,'cost':self.cost}
+            if current_pool_num+i>0:
+                pledge_per_pool=self.stake/(current_pool_num+i)
+                cost_per_pool=self.calculate_cost_per_pool(current_pool_num+i)
+                utility=self.calculate_solo_only_utility(current_pool_num+i,cost_per_pool,pledge_per_pool)
+                #print(current_pool_num+i,utility)
+                if utility>optimal_stratgey['utility']:
+                    optimal_stratgey={'pool_num':current_pool_num+i,'utility':utility,'pledge':pledge_per_pool,'cost':cost_per_pool}
+        
+        #create pool by most_optical_option,return strategy
+        if optimal_stratgey['pool_num']>0:
+            result={'strategy':self.create_solo_only_pool(optimal_stratgey['pool_num'],optimal_stratgey['cost'],optimal_stratgey['pledge']),
+                    'utility':optimal_stratgey['utility']}
+        return result
+            
+        
+
+    def calculate_solo_only_utility(self,pool_num,cost_per_pool,pledge_per_pool):
+        if pool_num==0:
+            return 0
+        r=self.model.reward_scheme.calculate_pool_reward(pledge_per_pool)
+        #print("total_stake_when_calculating:",self.model.total_stake)
+        return (r-cost_per_pool)*pool_num
+        
+    
+    def create_solo_only_pool(self,pool_num,cost,pledge):
+        draft_owned_pools={}
+        for i in range(0,pool_num):
+                pool_id = self.model.get_next_pool_id()
+                pool = Pool(
+                        pool_id=pool_id,
+                        cost=cost,
+                        pledge=pledge,
+                        owner=self.unique_id,
+                        reward_scheme=self.model.reward_scheme,
+                        margin=0,
+                        is_private=True
+                )
+                draft_owned_pools[pool_id]=pool
+        allocations={}#3. delegation
+        return Strategy(stake_allocations=allocations,owned_pools=draft_owned_pools)
+
+
+    def calculate_current_utility(self):
+        """
+        Calculate the utility of the current strategy
+        """
+        # solo only, so no delegation
+        if len(self.strategy.owned_pools.values())==0:
+            return 0
+        cost_per_pool=self.calculate_cost_per_pool(len(self.strategy.owned_pools))
+        current_utility = self.calculate_solo_only_utility(len(self.strategy.owned_pools),cost_per_pool,self.stake)
+        return current_utility
+    
+    def execute_strategy(self):
+         # operation moves
+        current_pools = self.model.pools
+        old_owned_pools = set(self.strategy.owned_pools.keys())
+        new_owned_pools = set(self.new_strategy.owned_pools.keys())
+        # closed some pools hat are not in new stategy
+        for pool_id in old_owned_pools - new_owned_pools:
+            # pools have closed
+            self.close_pool(pool_id)
+        for pool_id in new_owned_pools & old_owned_pools:
+            # updates in old pools
+            current_pools[pool_id] = self.update_pool(pool_id)
+
+        self.strategy = self.new_strategy
+        self.new_strategy = None
+        for pool_id in new_owned_pools - old_owned_pools:
+            self.open_pool(pool_id)
+        

@@ -13,7 +13,7 @@ from mesa.time import BaseScheduler, SimultaneousActivation, RandomActivation
 from logic.activations import SemiSimultaneousActivation
 import logic.helper as hlp
 import logic.model_reporters as reporters
-from logic.stakeholder_eth import EthStakeholder_hard, EthStakeholder_easy
+from logic.stakeholder_eth import EthStakeholder_hard, EthStakeholder_easy,EthStakeholder_solo
 from logic.reward_schemes import Ethereum
 import logic.liquid_contract as lc
 
@@ -480,13 +480,14 @@ class Ethereum_Sim(Model):
         args.pop('args')
         
         if args['metrics'] is None:
-            args['metrics'] = [20,5,6,7,8,9,13,17,19,23,24]
+            args['metrics'] = [20,5,6,7,8,9,13,17,19,24]
         if args['agent_profile'] is None: 
-            args['agent_profile'] = 'hard' # all non-myopic-agents
+            args['agent_profile'] = 'solo' # all non-myopic-agents
         
         self.seed = args['seed']
         if self.seed is None:
-            self.seed = random.randint(0, 9999999)
+            #self.seed = random.randint(0, 9999999)
+            self.seed=43
         super().__init__(seed=self.seed)
 
 
@@ -555,6 +556,7 @@ class Ethereum_Sim(Model):
         if total_stake_init != 1:
             # normalize stake values so that they are expressed as relative stakes
             total_stake_init = self.normalize_agent_stake(total_stake_init)
+        
         self.total_stake = total_stake_init
         self.export_initial_state_desc_file(self.seed)
         self.consecutive_idle_steps = 0  # steps towards convergence
@@ -575,7 +577,7 @@ class Ethereum_Sim(Model):
         self.equilibrium_steps = []
         self.pivot_steps = []
         self.generate_graphs = args['generate_graphs']
-        self.total_stake = self.update_used_stake()
+
 
 
     def update_used_stake(self):
@@ -623,6 +625,16 @@ class Ethereum_Sim(Model):
                 strategy=None
                 )
                 self.schedule.add(agent)
+        if agent_profile =='solo':
+            for i in range(self.n):
+                agent = EthStakeholder_solo(
+                unique_id=i,
+                model=self,
+                stake=stake_distribution[i],
+                cost=cost_distribution[i],
+                strategy=None
+                )
+                self.schedule.add(agent)
         return total_stake
     
     def normalize_agent_stake(self, total_stake):
@@ -633,6 +645,7 @@ class Ethereum_Sim(Model):
         norm_total_stake = 0
         for agent in self.schedule.agents:
             agent.stake /= total_stake
+            print(agent.unique_id,agent.stake)
             norm_total_stake += agent.stake
         if norm_total_stake != 1:
             # add (or subtract) tiny value from the last agent's stake to account for floating point errors and make
@@ -726,8 +739,7 @@ class Ethereum_Sim(Model):
     
     def export_agents_file(self):
         row_list = [
-            ["Agent id", "Initial stake", "Cost", "Potential Profit", "Status", "Pools owned", "Total pool stake",
-             "Pool splitting profit", "Profitable pool splitter"]]
+            ["Agent id", "Initial stake", "Cost", "Potential Profit", "Status", "Pools owned", "Total pool stake"]]
         agents = self.get_agents_dict()
         decimals = 15
         row_list.extend([
@@ -737,11 +749,7 @@ class Ethereum_Sim(Model):
                  agents[agent_id].strategy.owned_pools) > 0 else "Delegator",
              0 if agents[agent_id].strategy is None else len(agents[agent_id].strategy.owned_pools),
              0 if agents[agent_id].strategy is None else sum(
-                 [pool.stake for pool in agents[agent_id].strategy.owned_pools.values()]),
-             hlp.calculate_pool_splitting_profit(0, self.extra_pool_cost_fraction,
-                                                 agents[agent_id].cost, agents[agent_id].stake),
-             "YES" if hlp.calculate_pool_splitting_profit(0, self.extra_pool_cost_fraction,
-                                                          agents[agent_id].cost, agents[agent_id].stake) > 0 else "NO"
+                 [pool.stake for pool in agents[agent_id].strategy.owned_pools.values()])
              ] for agent_id in range(len(agents))
         ])
 
@@ -893,13 +901,13 @@ class Ethereum_Sim(Model):
         filepath = "output/" + filename
         header = [
             "id", "n", "alpha", "beta", "phi", "activation order", "reward function",  # "stk distr", "min cost", "max cost",
-            "descriptor", "-", "#pools", "#operators", "nakamoto coeff", "comments"
+            "descriptor", "-", "#pools", "#operators", "nakamoto coeff","Total pool stake","HHI","comments"
         ]
         row = [
             self.seq_id, self.n, self.alpha, self.reward_scheme.beta, self.extra_pool_cost_fraction,
             self.agent_activation_order, type(self.reward_scheme).__name__,
             self.execution_id[self.execution_id.index('-') + 1:], "", reporters.get_number_of_pools(self),
-            reporters.get_operator_count(self), reporters.get_nakamoto_coefficient(self), ""
+            reporters.get_operator_count(self), reporters.get_nakamoto_coefficient(self), reporters.get_total_pool_stake(self),reporters.calculate_HHI(self),""
         ]
         hlp.write_to_csv(filepath, header, row)
     

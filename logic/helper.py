@@ -611,7 +611,7 @@ def add_script_arguments(parser):
     adjusted during the course of the simulation, such as k.
     @param parser: an argparse.ArgumentParser object
     """
-    parser.add_argument('--n', nargs="?", type=positive_int, default=1000,
+    parser.add_argument('--n', nargs="?", type=positive_int, default=100,
                         help='The number of agents (natural number). Default is 1000.')
     parser.add_argument('--beta', nargs="+", type=positive_float, default=2,
                         help='The maximum effective balance of ethereum staking')
@@ -659,15 +659,15 @@ def add_script_arguments(parser):
     parser.add_argument('--iterations_after_convergence', nargs="?", type=int, default=10,  # todo maybe make constant
                         help='The minimum consecutive idle iterations that are required before terminations. '
                              'Default is 20.')
-    parser.add_argument('--max_iterations', nargs="?", type=positive_int, default=2000,
-                        help='The maximum number of iterations of the system. Default is 2000.')
+    parser.add_argument('--max_iterations', nargs="?", type=positive_int, default=1000,
+                        help='The maximum number of iterations of the system. Default is 1000.')
     parser.add_argument('--metrics', nargs="+", type=int, default=None, choices=range(1, len(REPORTER_IDS) + 1),
                         help='The list of ids that correspond to metrics that are tracked during the simulation. Default'
                              'is [20,5,6,7,8,9,13,17,19,23,24]')
     parser.add_argument('--generate_graphs', type=bool, default=True, action=argparse.BooleanOptionalAction,
                         help='If True then graphs relating to the tracked metrics are generated upon completion. Default'
                              'is True.'),
-    parser.add_argument('--seed', nargs="?", type=non_negative_int, default=None,
+    parser.add_argument('--seed', nargs="?", type=non_negative_int, default=44,
                         help='Seed for reproducibility. Default is None, which means that a seed is chosen at random.')
     parser.add_argument('--execution_id', nargs="?", type=str, default='',
                         help='An optional identifier for the specific simulation run, '

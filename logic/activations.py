@@ -24,6 +24,7 @@ class SemiSimultaneousActivation(BaseScheduler):
         while len(agent_keys) > 0:
             k = self.simultaneous_moves if self.simultaneous_moves < len(agent_keys) else len(agent_keys)
             current_agent_keys = self.model.random.sample(agent_keys, k=k)
+            #print("current_agent_keys:",current_agent_keys)
             for agent_key in current_agent_keys:
                 self._agents[agent_key].step()
             for agent_key in current_agent_keys:

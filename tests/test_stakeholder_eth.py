@@ -2,7 +2,7 @@ import pytest
 from copy import copy
 
 from logic.sim import Ethereum_Sim
-from logic.stakeholder_eth import EthStakeholder, EthStakeholder_easy, EthStakeholder_hard
+from logic.stakeholder_eth import EthStakeholder, EthStakeholder_easy, EthStakeholder_hard, EthStakeholder_solo
 from logic.strategy import Strategy
 import logic.helper as hlp
 from logic.pool import Pool
@@ -262,3 +262,16 @@ def test_beginner_pool_operation():
     margin=agent1.beginner_pool_potential()
 
     assert margin>0
+
+
+
+def test_ethereum_solo():
+    model = Ethereum_Sim(beta=2,alpha=1,n=10)
+    agents = model.get_agents_list()
+    model.step()
+    model.step()
+    model.step()
+
+    assert len(agents) == 10
+    assert model.total_stake == 1
+
