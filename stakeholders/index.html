@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+<title>Stakeholder profiles - Rewards Sharing Simulation Engine for Ethereum - Docs</title>
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+<meta name="generator" content="mkdocs-1.5.2, mkdocs-gitbook-1.0.7">
+
+<link rel="shortcut icon" href="../images/favicon.ico" type="image/x-icon">
+<meta name="HandheldFriendly" content="true"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta rel="next" href="" />
+<link href="../css/style.min.css" rel="stylesheet"> 
+</head>
+
+<body>
+<div class="book">
+<div class="book-summary">
+
+<nav role="navigation">
+<ul class="summary">
+<li>
+<a href=".." target="_blank" class="custom-link">Rewards Sharing Simulation Engine for Ethereum - Docs</a>
+</li>
+<li class="divider"></li>
+<li class="chapter" data-path="">
+<a href="..">Home</a>
+<li class="chapter" data-path="configuration/">
+<a href="../configuration/">Configuration</a>
+<li class="chapter" data-path="metrics/">
+<a href="../metrics/">Metrics</a>
+<li class="chapter" data-path="examples/">
+<a href="../examples/">Examples</a>
+<li class="chapter" data-path="faq.md">
+<a href="../faq.md">FAQ</a>
+<li class="chapter active" data-path="stakeholders/">
+<a href="./">Stakeholder profiles</a>
+<li class="divider"></li>
+
+
+
+<li><a href="http://www.mkdocs.org">
+Published with MkDocs
+</a></li>
+
+<li><a href="https://github.com/GitbookIO/theme-default">
+Theme by GitBook
+</a></li>
+</ul>
+
+</nav>
+
+</div> <!-- end of book-summary -->
+
+<div class="book-body">
+<div class="body-inner">
+<div class="book-header" role="navigation">
+
+<!-- Title -->
+<h1>
+<i class="fa fa-circle-o-notch fa-spin"></i>
+<a href="." ></a>
+</h1>
+
+</div> <!-- end of book-header -->
+
+<div class="page-wrapper" tabindex="-1" role="main">
+<div class="page-inner">
+
+<section class="normal markdown-section">
+
+
+
+<h1 id="stakeholder-profiles">Stakeholder Profiles</h1>
+<p>This simulation indented to simulate real world Ethereum Pooling behaviors. However after trying, I decided to develop several types of stakeholder for better exploration.</p>
+<h2 id="eth-stakeholder">ETH stakeholder</h2>
+<p>ETH Stakeholder have attributes like cost for opening pool, stake, current strategy and new strategy.</p>
+<p>They have two types of stategy: delegate or operate. In operate, they can operate liquid pool that is not private and allows others to stake inside their pool, or operate solo pool. </p>
+<p>During each agent step, they will try to update their strategy by calcualting several options they have and they choose the most optimal one.</p>
+<ul>
+<li>Delegate strategy: They will put all their stake in delegation and see how it comes, but calculating the potential utility they can have by this delegate strategy. To note that, stakeholders are activated by random older and act semisimoutineous, so they are myopic and not have the potential to predict or imagine future pool or simulation status. For example, in the first step of simulation, the first agent in activation, they have no choice to delegate because there is no pool in the simulation  but to operate pool.</li>
+<li>Pool operation strategy: this is different during each different stakeholder profile.</li>
+</ul>
+<p>After calculating these two potential strategies, they then compare it with current strategy and see if they can make more profit by changing their current one. If so, they will update their strategy and then execute it.  If no agent can make more profit by changing their strategy, the equilibrium is reached. </p>
+<h2 id="eth-stakeholder-easy">ETH stakeholder Easy</h2>
+<p>Easy stakeholder is more align with real world. They can choose from different extablished liquid contract just like in realworld ETH holder can choose solo stake or use liquid protocol like lido or rocket pool.</p>
+<ul>
+<li>Pool operation strategy: Having same unit of minimum effective balance, it is more beneficial to choose solo staking because they can spend less cost on operating. Even though due to scale of economics, their second pool will be less expensive thay the first one, but this cost is usually higher than their delegation. They can calculate base on their cost and protocol margin and then rank solo or liquid strategy. If they have enough stake, they will have more utility by choosing solo. </li>
+</ul>
+<h2 id="eth-stakeholder-hard">ETH stakeholder Hard</h2>
+<p>Easy stakeholder is more align with real world. They can choose from different extablished liquid contract just like in realworld ETH holder can choose solo stake or use liquid protocol like lido or rocket pool. </p>
+<h3 id="find-margin">Find Margin</h3>
+<p>The main target of margin selection progress is maximize their profit. </p>
+<p>By delegation and solo staking, their reward is totally depend on the reward scheme so can not be influenced by their selection</p>
+<p>For a agents who have enoughs stake to solo or liquid operation, they will try to make the most of their profit by operating liquid pool with a big margin. So this margin is called better than solo and delegate margin, denote as margin_0.</p>
+<p>with margin_0: <code>solo_utility(alpha) = liquid_utility(alpha)</code></p>
+<p>For agents who only have enought stake to liquid opertaion, the only reason for them to operate liquid pool is that it need to be more profit than delegate. so margin_0 is called better than delegate margin.</p>
+<p>with margin_0: <code>liquid_utility(alpha)=delegate_utility(alpha)</code></p>
+<p><img alt="Find_Margin" src="../img/Find_Margin.png" /></p>
+<p>With number of liquid pools the operator want to operate, they will try to squeeze in the exsisted pool ranking, in the last second position because it is enought to attract delegate because it is ranked higher than the last one, but also maximize their utility. </p>
+<p>So their <code>potential margin</code> will be the <code>Target Margin+random boost</code> from (1e-3,1e-2) (margin is usually at the scale of 1e-1).</p>
+<p>If the <code>potential margin</code> is bigger than margin_0, then it will be it. If not, they will stop opening the liquid pool.</p>
+
+
+</section>
+
+</div> <!-- end of page-inner -->
+</div> <!-- end of page-wrapper -->
+
+</div> <!-- end of body-inner -->
+
+</div> <!-- end of book-body -->
+<script src="../js/main.js"></script>
+<script src="../js/gitbook.min.js"></script>
+<script src="../js/theme.min.js"></script>
+</body>
+</html>
