@@ -37,7 +37,7 @@ class Simulation(Model):
             args.pop('input_from_file')
             args.pop('args')
         if args['metrics'] is None:
-            args['metrics'] = [1, 2, 6, 9, 17, 18, 25]
+            args['metrics'] = [1, 2, 6, 9, 17, 18, 25,20]
         if args['agent_profile_distr'] is None:
             args['agent_profile_distr'] = [1, 0, 0]
 
@@ -509,11 +509,11 @@ class Ethereum_Sim(Model):
         self.directory = path
         self.export_args_file(args)
         self.total_stake = 1
+        self.used_stake = 1e-6
 
         # A phase is defined as period during which the parameters of the reward sharing scheme don't change
         self.current_phase = 0
         total_phases = 1
-
         
         other_fields = [
             'n', 'alpha', 'beta', 'relative_utility_threshold', 'absolute_utility_threshold', 'max_iterations',
@@ -584,8 +584,23 @@ class Ethereum_Sim(Model):
         '''
         This methods updates the total stake used in delegation and pledge, by summing the stake of all pools.
         '''
-        self.used_stake = sum(pool.stake for pool in self.pools.values())
+        total_used_stake=0
+        agent_list=self.get_agents_list()
+        for agent in agent_list:
+            agent_pledge=math.fsum(pool.pledge for pool in agent.strategy.owned_pools.values())
+            agent_delegation=math.fsum(agent.strategy.stake_allocations.values())
+            agent_insurance=math.fsum(pool.insurance for pool in agent.strategy.owned_pools.values())
+            total_used_stake+=agent_pledge+agent_delegation+agent_insurance
+            
+        #self.used_stake = math.fsum(pool.stake for pool in self.pools.values())
+        self.used_stake=total_used_stake
         return self.used_stake
+    
+
+    def agent_stake(self):
+        agent_list=self.get_agents_list()
+        agent_stake=math.fsum(agent.stake for agent in agent_list)
+        return agent_stake
         
     def initialize_agents(self, agent_profile, cost_min, cost_max, pareto_param, stake_distr_source, seed):
         if stake_distr_source == 'file':
@@ -739,17 +754,23 @@ class Ethereum_Sim(Model):
     
     def export_agents_file(self):
         row_list = [
-            ["Agent id", "Initial stake", "Cost", "Potential Profit", "Status", "Pools owned", "Total pool stake"]]
+            ["Agent id", "Initial stake", "Cost",  "Status", "Pools owned", "Total pool stake","Total pledge","Total delegation"]]
         agents = self.get_agents_dict()
         decimals = 15
         row_list.extend([
-            [agent_id, round(agents[agent_id].stake, decimals), round(agents[agent_id].cost, decimals),
-             round(hlp.calculate_potential_profit(reward_scheme=self.reward_scheme, stake=agents[agent_id].stake, is_private = None), decimals),
+            [agent_id, 
+             round(agents[agent_id].stake, decimals), 
+             round(agents[agent_id].cost, decimals),
+             #round(hlp.calculate_potential_profit(reward_scheme=self.reward_scheme, stake=agents[agent_id].stake, is_private = None), decimals),
              "Abstainer" if agents[agent_id].strategy is None else "Operator" if len(
                  agents[agent_id].strategy.owned_pools) > 0 else "Delegator",
              0 if agents[agent_id].strategy is None else len(agents[agent_id].strategy.owned_pools),
+
              0 if agents[agent_id].strategy is None else sum(
-                 [pool.stake for pool in agents[agent_id].strategy.owned_pools.values()])
+                 [pool.stake for pool in agents[agent_id].strategy.owned_pools.values()]),
+             0 if agents[agent_id].strategy is None else sum(
+                    [pool.pledge for pool in agents[agent_id].strategy.owned_pools.values()]),
+            0 if agents[agent_id].strategy is None else math.fsum(agents[agent_id].strategy.stake_allocations.values())
              ] for agent_id in range(len(agents))
         ])
 
@@ -759,15 +780,15 @@ class Ethereum_Sim(Model):
         hlp.export_csv_file(row_list, filepath)
 
     def export_pools_file(self):
-        row_list = [["Pool id", "Owner id", "Stake", "Pool Pledge", "Pool stake", "Owner cost", "Pool cost",
-                     "Pool margin", "Delegator Id"]]
+        row_list = [["Pool id", "Owner id","Type","Stake", "Pool Pledge", "Owner cost", "Pool cost",
+                     "Pool margin", "Delegator Id","Insurance"]]
         agents = self.get_agents_dict()
         pools = self.get_pools_list()
         decimals = 15
         row_list.extend(
-            [[pool.id, pool.owner, round(pool.stake, decimals), round(pool.pledge, decimals),
-              round(pool.stake, decimals), round(agents[pool.owner].cost, decimals), round(pool.cost, decimals),
-              round(pool.margin, decimals),pool.delegators.keys()] for pool in pools])
+            [[pool.id, pool.owner, "solo" if pool.is_private else "liquid",round(pool.stake, decimals), round(pool.pledge, decimals),
+             round(agents[pool.owner].cost, decimals), round(pool.cost, decimals),
+              round(pool.margin, decimals),list(pool.delegators.keys()),pool.insurance] for pool in pools])
         prefix = 'final-state-pools-'
         filename = prefix + self.execution_id + '.csv'
         filepath = self.directory / filename
@@ -800,33 +821,31 @@ class Ethereum_Sim(Model):
     def export_graphs(self):
         figures_dir = self.directory / "figures"
         pathlib.Path(figures_dir).mkdir(parents=True, exist_ok=True)
-
-        rng = np.random.default_rng(seed=156)
-        random_colours = rng.random((len(reporters.ALL_MODEL_REPORTEERS), 3))
-        all_reporter_colours = dict(zip(reporters.ALL_MODEL_REPORTEERS.keys(), random_colours))
-        all_reporter_colours['Mean pledge'] = 'red'
-        all_reporter_colours["Pool count"] = 'C0'
-        all_reporter_colours["Total pledge"] = 'purple'
-        all_reporter_colours["Nakamoto coefficient"] = 'pink'  # todo maybe remove custom colors
-
         df = self.datacollector.get_model_vars_dataframe()
         if len(df) > 0:
-            for col in df.columns:
+            for i,col in enumerate(df.columns):
                 if isinstance(df[col][0], list):
                     hlp.plot_stack_area_chart(
                         pool_sizes_by_step=df[col], execution_id=self.execution_id, path=figures_dir
                     )
                 elif isinstance(df[col][0], dict):
-                    pass
+                    hlp.plot_multiple_lines(data_dict=df[col], execution_id=self.execution_id, title=col,
+                        x_label="Round", y_label=col, filename=col, equilibrium_steps=self.equilibrium_steps,
+                        pivot_steps=self.pivot_steps, path=figures_dir, show_equilibrium=True)
                 else:
-                    hlp.plot_line(
-                        data=df[col], execution_id=self.execution_id, color=all_reporter_colours[col], title=col,
+                    
+                    hlp.plot_line_sns(
+                        data=df[col], execution_id=self.execution_id, color=i, title=col,
                         x_label="Round", y_label=col, filename=col, equilibrium_steps=self.equilibrium_steps,
                         pivot_steps=self.pivot_steps, path=figures_dir, show_equilibrium=True
                     )
 
     def get_pools_list(self):
-        return list(self.pools.values())
+        agent_list=self.get_agents_list()
+        pools_list=[]
+        for agent in agent_list:
+            pools_list.extend(agent.strategy.owned_pools.values())
+        return pools_list
 
     def get_agents_dict(self):
         return {agent.unique_id: agent for agent in self.schedule.agents}

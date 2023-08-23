@@ -1,3 +1,4 @@
+
 import statistics
 import collections
 from gekko import GEKKO
@@ -9,7 +10,12 @@ import logic.helper as hlp
 
 
 def get_number_of_pools(model):
-    return len(model.pools)
+    pools=model.get_pools_list()
+    solo_pool=[pool for pool in pools if pool.is_private==True]
+    liquid_pool=[pool for pool in pools if pool.is_private==False]
+    result_dict = dict(solo=len(solo_pool), liquid=len(liquid_pool), total=len(pools))
+    return result_dict
+
 
 #also counting the number of pools of solo staking
 def get_avg_margin(model):
@@ -394,21 +400,42 @@ def get_stake_distr_stats(model):
 def get_operator_count(model):
     counted_owners = set()  # Create a set to track counted owners
     unique_owners = 0  # Initialize the count of unique owners
+    counted_solo_owners=set()
+    solo_owner=0
+    counted_liquid_owners=set()
+    liquid_owner=0
 
     for pool in model.get_pools_list():
         if pool.owner not in counted_owners:
             counted_owners.add(pool.owner)  # Add the owner to the set
             unique_owners += 1  # Increment the count
+    for pool in model.get_pools_list():
+        if pool.is_private==True:
+            if pool.owner not in counted_solo_owners:
+                counted_solo_owners.add(pool.owner)
+                solo_owner+=1
+        else:
+            if pool.owner not in counted_liquid_owners:
+                counted_liquid_owners.add(pool.owner)
+                liquid_owner+=1
 
-    return unique_owners  # Return the count of unique owners
-
+    result_dict = dict(solo=solo_owner, liquid=liquid_owner, total=unique_owners)
+    return result_dict
 
 def get_total_pool_stake(model):
+    solo_stakes=0
+    liquid_stakes=0
     current_pools = model.get_pools_list()
     if len(current_pools) == 0:
-        return 0
-    stakes = [pool.stake for pool in current_pools]
-    return fsum(stakes)
+        result_dict=dict(solo=solo_stakes, liquid=liquid_stakes, total=solo_stakes+liquid_stakes)
+        return result_dict
+    for pool in current_pools:
+        if pool.is_private==False:
+            liquid_stakes+=pool.stake
+        else:
+            solo_stakes+=pool.stake
+    result_dict = dict(solo=solo_stakes, liquid=liquid_stakes, total=solo_stakes+liquid_stakes)
+    return result_dict
 
 def calculate_HHI(model):
     agents = model.schedule.agents
@@ -425,12 +452,16 @@ def calculate_HHI(model):
     return hhi
 
 def get_total_cost(model):
+    solo_cost=0
+    liquid_cost=0
     pools=model.get_pools_list()
-    total_cost=0
     for pool in pools:
-        total_cost+=pool.cost
-
-    return total_cost
+        if pool.is_private==True:
+            solo_cost+=pool.cost
+        else:
+            liquid_cost+=pool.cost
+    result_dict = dict(solo=solo_cost, liquid=liquid_cost, total=solo_cost+liquid_cost)
+    return result_dict
 
 def get_total_delegate(model):
     pools=model.get_pools_list()
@@ -527,5 +558,5 @@ REPORTER_IDS = {
     22: "Median margin",
     23: "Liquidity Gain percent",
     24: "Total cost",
-    25: "Iterations"
+    25: "Iterations",
 }

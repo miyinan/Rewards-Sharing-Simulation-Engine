@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 from matplotlib import ticker
 import seaborn as sns
 import argparse
+import pandas as pd
 
 from logic.reward_schemes import Ethereum
 from logic.model_reporters import REPORTER_IDS
@@ -433,6 +434,9 @@ def plot_line(data, execution_id, color, x_label, y_label, filename, equilibrium
     for i, step in enumerate(pivot_steps):
         label = "Parameter change" if i == 0 else ""
         plt.plot(step, data[step], 'x', label=label, c=pivot_colour)
+    equilibrium_value=data.iloc[-1]
+    label_text = f'value: {equilibrium_value:.2f}'
+    plt.text(data.index[-1]-8, equilibrium_value*(1+0.04), label_text, color='black', fontsize=10)
     plt.title(title)
     plt.xlabel(x_label)
     plt.ylabel(y_label)
@@ -441,6 +445,82 @@ def plot_line(data, execution_id, color, x_label, y_label, filename, equilibrium
     plt.savefig(path / filename, bbox_inches='tight')
     plt.close(fig)
 
+def plot_line_sns(data, execution_id, color, x_label, y_label, filename, equilibrium_steps, pivot_steps,
+              path, title='', show_equilibrium=False):
+    sns.set(style="whitegrid")  # 设置 Seaborn 样式
+    sns.set_context("notebook", rc={"grid.linewidth": 0.4, "grid.alpha": 0.4,"grid.dashes": (1, 1)})  # 调整网格样式和间距
+    equilibrium_colour = 'mediumseagreen'
+    pivot_colour = 'gold'
+    color=sns.color_palette('Paired')[color]
+
+    fig = plt.figure(figsize=(6, 4))
+    sns.lineplot(data=data, color=color,label=y_label)
+    plt.scatter(x=1, y=data.iloc[1], color=color, marker='o')
+    plt.text(1,data.iloc[1]*(1+0.04),f'{data.iloc[1]:.2f}',fontsize=10)
+    
+    if show_equilibrium:
+        for i, step in enumerate(equilibrium_steps):
+            label = "Equilibrium reached at step "+str(step) if i == 0 else ""
+            plt.axvline(x=step, label=label, c=equilibrium_colour)
+    for i, step in enumerate(pivot_steps):
+        label = "Parameter change" if i == 0 else ""
+        plt.plot(step, data[step], 'x', label=label, c=pivot_colour)
+    equilibrium_value = data.iloc[-1]
+    label_text = f'value: {equilibrium_value:.2f}'
+    plt.text(data.index[-1] - 8, equilibrium_value * (1 + 0.04), label_text, color='black', fontsize=10)
+
+    plt.title(title)
+    plt.xlabel(x_label)
+    plt.ylabel(y_label)
+    plt.ylim(0,max(data)*1.2) 
+    plt.legend(loc='lower right')
+    filename = execution_id + "-" + filename + ".png"
+    plt.savefig(path / filename, bbox_inches='tight',dpi=300)
+    plt.close(fig)
+
+def plot_multiple_lines(data_dict, execution_id, x_label, y_label,filename, equilibrium_steps, pivot_steps,
+                        path, title='', show_equilibrium=False):
+    sns.set(style="whitegrid")  # 设置 Seaborn 样式
+    sns.set_context("notebook", rc={"grid.linewidth": 0.4, "grid.alpha": 0.4, "grid.dashes": (1, 1)})  # 调整网格样式和间距
+    equilibrium_colour = 'mediumseagreen'
+    pivot_colour = 'gold'
+    fig = plt.figure(figsize=(8, 5))
+    i=0 # for setting color
+    
+    # change data_dict to dataframes,with seperate columns
+    all_keys=set()
+    for d in data_dict:
+        all_keys.update(d.keys())
+    data=pd.DataFrame()
+    
+    for i,key in enumerate(all_keys):
+        data[key] = pd.DataFrame([{key: d[key]} for d in data_dict])
+        sns.lineplot(x=data[key].index,y=data[key],label=key)
+        equilibrium_value=data[key].iloc[-1]
+        plt.text(len(data[key]) - 9, equilibrium_value * (1 + 0.04), f'{key}: {equilibrium_value:.2f}', fontsize=10)
+        plt.text(1,data[key].iloc[1]*(1+0.04),f'{data[key].iloc[1]:.2f}',fontsize=10)
+        plt.scatter(x=1, y=data[key].iloc[1], marker='o')
+    
+    if show_equilibrium:
+        for i, step in enumerate(equilibrium_steps):
+            label = "Equilibrium reached at step "+str(step) if i == 0 else ""
+            plt.axvline(x=step, label=label, c=equilibrium_colour)
+            #plt.text(step-1,plt.ylim()[0]-2,f'{step}',fontsize=10)
+            
+    
+    for i, step in enumerate(pivot_steps):
+        label = "Parameter change" if i == 0 else ""
+        plt.plot(step, data[step], 'x', label=label, c=pivot_colour)
+    
+    plt.title(title)
+    plt.xlabel(x_label)
+    plt.ylabel(y_label)
+    #plt.ylim(0, y_limit*1.1)
+    
+    plt.legend(loc='lower right')
+    filename = execution_id + "-" + filename + ".png"
+    plt.savefig(path / filename, bbox_inches='tight', dpi=300)  # 调整 dpi 参数来提高分辨率
+    plt.close(fig)
 
 def plot_stack_area_chart(pool_sizes_by_step, execution_id, path):
     pool_sizes_by_agent = np.array(list(pool_sizes_by_step)).T

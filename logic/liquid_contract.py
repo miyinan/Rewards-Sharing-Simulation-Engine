@@ -45,7 +45,7 @@ def liquid_staking_list():
     return sorted_contracts
 
 def liquid_staking():
-    liquid_staking=LiquidContract(margin=0, min_pledge_factor=0.5, insurance_factor=0.2,name="liquid_staking")
+    liquid_staking=LiquidContract(margin=0, min_pledge_factor=0.5, insurance_factor=0.1,name="liquid_staking")
     return liquid_staking
 
 
