@@ -466,7 +466,7 @@ class Simulation(Model):
 
 class Ethereum_Sim(Model):
     def __init__(
-            self,n=100,beta=0.001,alpha=0.00008,stake_distr_source='Pareto', agent_profile=None, 
+            self,n=100,beta=2,alpha=1,stake_distr_source='Pareto', agent_profile=None, 
             inactive_stake_fraction=0, inactive_stake_fraction_known=False, relative_utility_threshold=0,
             absolute_utility_threshold=0, seed=None, pareto_param=2.0, max_iterations=1000, cost_min=0,
             cost_max=1e-4, extra_pool_cost_fraction=0.4, agent_activation_order="semisimultaneous",
@@ -533,6 +533,7 @@ class Ethereum_Sim(Model):
 
         self.alpha = self.alpha / self.n
         self.beta = self.beta / self.n
+        self.liquidity=args['liquidity']
         
         self.reward_scheme = Ethereum(model=self, beta=self.beta, alpha=self.alpha)
         self.total_phases = total_phases
@@ -660,7 +661,7 @@ class Ethereum_Sim(Model):
         norm_total_stake = 0
         for agent in self.schedule.agents:
             agent.stake /= total_stake
-            print(agent.unique_id,agent.stake)
+            #print(agent.unique_id,agent.stake)
             norm_total_stake += agent.stake
         if norm_total_stake != 1:
             # add (or subtract) tiny value from the last agent's stake to account for floating point errors and make

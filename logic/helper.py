@@ -516,6 +516,7 @@ def plot_multiple_lines(data_dict, execution_id, x_label, y_label,filename, equi
     plt.xlabel(x_label)
     plt.ylabel(y_label)
     #plt.ylim(0, y_limit*1.1)
+
     
     plt.legend(loc='lower right')
     filename = execution_id + "-" + filename + ".png"
@@ -697,7 +698,7 @@ def add_script_arguments(parser):
                         help='The maximum effective balance of ethereum staking')
     parser.add_argument('--alpha', nargs="+", type=non_negative_float, default=1,
                         help='The minimum effective balance of ethereum staking')
-    parser.add_argument('--liquidity', nargs="+", type=non_negative_float, default=0.1,
+    parser.add_argument('--liquidity', nargs="+", type=non_negative_float, default=0.3,
                         help='The minimum effective balance of ethereum staking')
     parser.add_argument('--reward_scheme', nargs="?", type=str, default="Ethereum_Sim",
                         # todo maybe allow multiple args to enable changing the reward scheme of the system during runtime

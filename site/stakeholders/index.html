@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+<title>Stakeholder profiles - Rewards Sharing Simulation Engine for Ethereum - Docs</title>
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+<meta name="generator" content="mkdocs-1.5.2, mkdocs-gitbook-1.0.7">
+
+<link rel="shortcut icon" href="../images/favicon.ico" type="image/x-icon">
+<meta name="HandheldFriendly" content="true"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta rel="next" href="" />
+<link href="../css/style.min.css" rel="stylesheet"> 
+</head>
+
+<body>
+<div class="book">
+<div class="book-summary">
+
+<nav role="navigation">
+<ul class="summary">
+<li>
+<a href=".." target="_blank" class="custom-link">Rewards Sharing Simulation Engine for Ethereum - Docs</a>
+</li>
+<li class="divider"></li>
+<li class="chapter" data-path="">
+<a href="..">Home</a>
+<li class="chapter" data-path="configuration/">
+<a href="../configuration/">Configuration</a>
+<li class="chapter" data-path="metrics/">
+<a href="../metrics/">Metrics</a>
+<li class="chapter" data-path="examples/">
+<a href="../examples/">Examples</a>
+<li class="chapter" data-path="faq.md">
+<a href="../faq.md">FAQ</a>
+<li class="chapter active" data-path="stakeholders/">
+<a href="./">Stakeholder profiles</a>
+<li class="divider"></li>
+
+
+
+<li><a href="http://www.mkdocs.org">
+Published with MkDocs
+</a></li>
+
+<li><a href="https://github.com/GitbookIO/theme-default">
+Theme by GitBook
+</a></li>
+</ul>
+
+</nav>
+
+</div> <!-- end of book-summary -->
+
+<div class="book-body">
+<div class="body-inner">
+<div class="book-header" role="navigation">
+
+<!-- Title -->
+<h1>
+<i class="fa fa-circle-o-notch fa-spin"></i>
+<a href="." ></a>
+</h1>
+
+</div> <!-- end of book-header -->
+
+<div class="page-wrapper" tabindex="-1" role="main">
+<div class="page-inner">
+
+<section class="normal markdown-section">
+
+
+
+<h1 id="understanding-ethereum-stakeholder-profiles">Understanding Ethereum Stakeholder Profiles</h1>
+<p>The purpose of this simulation is to replicate real-world Ethereum pooling behaviors. However, upon further exploration, I've expanded it to include various types of stakeholders to enhance the depth of understanding.</p>
+<h3 id="agent-state">Agent State</h3>
+<p>ETH Stakeholders are characterized by attributes such as the cost of opening a pool, their stake, their current strategy, and their potential new strategy. At the start of the simulation, agents are initialized with both a stake and cost.</p>
+<p>In the initial round, the current strategy for all stakeholders is set to <code>None</code>. Additionally, at the beginning of each subsequent round, their new strategy is also set to <code>None</code>.</p>
+<h3 id="updating-strategies">Updating Strategies</h3>
+<p>Stakeholders have two potential strategies: delegation or operation. Under the "operation" strategy, they can choose to operate a liquid pool (one that's not private) where others can stake, or they can operate a solo pool.</p>
+<p>During each step of the simulation, stakeholders analyze their current options and update their strategy accordingly. The process involves evaluating potential utility and choosing the most optimal approach:</p>
+<ul>
+<li><strong>Delegate Strategy:</strong> Stakeholders allocate all their stake to delegation to gauge potential outcomes and calculate utility. It's important to note that stakeholders act semi-synchronously, following a random order of activation, which means they are myopic and lack the ability to foresee future pool or simulation states. For instance, in the initial simulation step, the first agent in the order might lack the choice to delegate due to the absence of pools, forcing them to opt for operating a pool instead.</li>
+<li><strong>Pool Operation Strategy:</strong> This strategy varies across different stakeholder profiles, which are further explained below.</li>
+</ul>
+<p>After considering these two potential strategies, stakeholders compare them with their current strategy to determine if they can maximize profits by making a strategic shift.</p>
+<h3 id="executing-strategies">Executing Strategies</h3>
+<p>Should a new strategy be more advantageous, stakeholders execute it. This involves discontinuing their previous pools and initiating new ones based on the updated strategy. Simultaneously, they adjust their delegation. If no stakeholders stand to gain from altering their strategy, an equilibrium state is reached.</p>
+<h2 id="easy-eth-stakeholder">Easy ETH stakeholder</h2>
+<p>The Easy ETH Stakeholder profile closely mirrors real-world scenarios. These stakeholders possess the flexibility to choose from established liquid contracts, similar to how real-world ETH holders can opt for solo staking or leverage liquid protocols such as Lido or Rocket Pool.</p>
+<p>Given a consistent minimum effective balance, choosing solo staking proves more advantageous. This selection entails lower operational costs. While the expenses associated with their second pool might be more cost-effective than the first, these costs still tend to surpass those of delegation and liquidity. Stakeholders perform cost calculations based on their specific cost and protocol margin, subsequently ranking their choice between solo and liquid strategies. In instances where stakeholders have a substantial stake, selecting solo staking generally results in greater utility.</p>
+<p>For Easy ETH stakeholders, their ability to accurately assess their strategy often leads to a rapid attainment of equilibrium.</p>
+<h2 id="hard-eth-stakeholder">Hard ETH stakeholder</h2>
+<p>Easy stakeholder is more align with real world. They can choose from different extablished liquid contract just like in realworld ETH holder can choose solo stake or use liquid protocol like lido or rocket pool. </p>
+<h3 id="pool-operation-strategy">Pool Operation strategy</h3>
+<p><strong>Beginner</strong>: If they are beginner, they will be more rational and limited with information. To be more frankly, they don't have the access to explore the pool ranking to decide their margin.  All is depend on their stake:</p>
+<ul>
+<li>not able to open liquid pool: they are not eligble to do any pool opertaion, they can only delegate</li>
+<li>able to open liquid pool but not solo: they will open one solo pool with <code>margin=margin_0+random_boost</code> </li>
+<li>able to open solo:  They might have many stake but they can only use 1 unit of stake(alpha) in pool operation just to test the water: 1 solo pool(max pledge to beta) or 2 liquid pool with same margin <code>margin=margin_0+random_boost</code>.</li>
+</ul>
+<p><strong>Not Beginner</strong>: If they have experience opening a pool, they are facing options:</p>
+<ul>
+<li>Increase Pool: They can use one unit stake to 1. open one solo pool 2. open two liquid pool 3. open one liquid pool</li>
+<li>Decrease Pool: They can use take away one unit stake from 1. close one solo pool 2. close two liquid pool 3.close one liquid pool</li>
+<li>Reset Margin: They can remain the number of pools they are having, but reset their margin based on current pool ranking situation.</li>
+</ul>
+<p>So with the given options they can choose, they will find suitable margin for the pools, and then calculate the utility of these options, with the highest one be the Pool operation strategy.
+<img src="img/flow.drawio (2).png" alt="Alt text" style="zoom:50%;" /></p>
+<h3 id="margin-selection">Margin Selection</h3>
+<p>The primary objective of the margin selection process is to optimize profit for stakeholders.</p>
+<p>When it comes to delegation and solo staking, the reward is entirely reliant on the reward scheme, and thus remains unaffected by stakeholder selection.</p>
+<p>For stakeholders possessing enough stake to engage in solo or liquid operations, the key strategy is to maximize profit by operating a liquid pool with a substantial margin. This specific margin is known as "margin_0," and it surpasses both the solo and delegate margins. This can be expressed as:</p>
+<ul>
+<li>When using margin_0: <code>solo_utility(alpha) = liquid_utility(alpha)</code></li>
+</ul>
+<p>On the other hand, stakeholders with sufficient stake solely for liquid operations opt for operating a liquid pool only when the profit potential outweighs that of delegation. Hence, margin_0 is considered more favorable than the delegate margin. This translates to:</p>
+<ul>
+<li>When using margin_0: <code>liquid_utility(alpha) = delegate_utility(alpha)</code></li>
+</ul>
+<p>In terms of the number of liquid pools a stakeholder aims to operate, they strategically aim for the second-to-last position in the existing pool ranking. This position is advantageous as it's attractive to delegates and offers a higher ranking than the last one, resulting in optimized utility.</p>
+<p><img src="img/Find_Margin.png" alt="Find_Margin" style="zoom:70%;" /></p>
+<p>Consequently, stakeholders calculate their "potential margin," which is derived from the "Target Margin" plus a random boost falling within the range of (1e-3, 1e-2). This potential margin usually scales around 1e-1.</p>
+<p>If the potential margin surpasses margin_0, it becomes the chosen margin. Otherwise, stakeholders refrain from opening a liquid pool because this operation will cost them loss.</p>
+<h2 id="eth-stakeholder-solo">ETH Stakeholder- Solo</h2>
+<p>The Solo ETH Stakeholder profile envisions a scenario without supplementary liquid staking alongside Ethereum staking. Agents in this context are solely empowered to open solo pools. Stakeholders with sufficient stakes to become validators on the beacon chain maximize their involvement by opening as many solo pools as their stakes permit. Meanwhile, stakeholders who don't meet validator prerequisites lack the option of solo pool operation and liquid pool delegation. Their sole choice is to retain their stake without active engagement.</p>
+
+
+</section>
+
+</div> <!-- end of page-inner -->
+</div> <!-- end of page-wrapper -->
+
+</div> <!-- end of body-inner -->
+
+</div> <!-- end of book-body -->
+<script src="../js/main.js"></script>
+<script src="../js/gitbook.min.js"></script>
+<script src="../js/theme.min.js"></script>
+</body>
+</html>

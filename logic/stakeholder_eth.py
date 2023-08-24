@@ -34,7 +34,9 @@ class EthStakeholder(Agent):
     def advance(self):
         if self.new_strategy is not None:
             self.execute_strategy()
-            self.model.current_step_idle = False    
+            self.model.current_step_idle = False
+        
+         
 
     def update_strategy(self):
         pass
@@ -433,8 +435,13 @@ class EthStakeholder_hard(EthStakeholder):
             possible_moves["operator"] = (operator_utility,operator_strategy)
 
         # Maximize Utility strategy
-        max_utility_strategy = max(possible_moves, key=lambda x:possible_moves[x][0]) # sort the strategy by the utility
-        self.new_strategy= None if max_utility_strategy == "current" else possible_moves[max_utility_strategy][1]
+        max_utility_strategy_key = max(possible_moves, key=lambda x:possible_moves[x][0]) # sort the strategy by the utility
+        max_utility_strategy = possible_moves[max_utility_strategy_key][1]
+        if max_utility_strategy == "current":
+            self.new_strategy= None
+        else:
+            self.new_strategy=max_utility_strategy
+        
 
         #dorp draft pools
         #if operator_strategy is not None:
@@ -745,7 +752,7 @@ class EthStakeholder_hard(EthStakeholder):
         margin_0 is the base margin that will garanteen the new liquid pool is profitbale than delegate(or solo)
         '''
         margin =[] 
-        boost = random.uniform(1e-3, 1e-1)# to ensure that the new desirability will be higher than the target one
+        boost = random.uniform(1e-3, 1e-2)# to ensure that the new desirability will be higher than the target one
         #boost=1e-2
 
         fixed_pools_ranked = [pool 

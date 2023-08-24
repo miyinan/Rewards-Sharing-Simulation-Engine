@@ -4,5 +4,7 @@ nav:
         - Configuration: configuration.md
         - Metrics: metrics.md
         - Examples: examples.md
+        - FAQ: faq.md
+        - Stakeholder profiles: stakeholders.md
 theme: gitbook
 plugins: []

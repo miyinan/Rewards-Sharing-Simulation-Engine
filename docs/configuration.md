@@ -28,7 +28,7 @@ The min effective balance in simulation. In ethereum there is a min effective ba
 
 **--beta**:
 
- The max effective balance in simulation. In ethereum there is a max effective balance requirment, it is also set to be 32 ETH.  max_effecive_balance = 1/n*beta (reward sharing scheme parameter). The default value is 2, but any positive number is accepted. beta must be bigger than alpha
+ The max effective balance in simulation. In ethereum there is a max effective balance requirment, it is also set to be 32 ETH.  max_effecive_balance = 1/n*beta (reward sharing scheme parameter). The default value is 2, but any positive number is accepted. beta must be bigger than alpha or equal than alpha.
 
 ---
 
