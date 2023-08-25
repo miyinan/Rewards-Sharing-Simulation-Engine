@@ -39,7 +39,7 @@ For Easy ETH stakeholders, their ability to accurately assess their strategy oft
 
 ## Hard ETH stakeholder 
 
-Easy stakeholder is more align with real world. They can choose from different extablished liquid contract just like in realworld ETH holder can choose solo stake or use liquid protocol like lido or rocket pool. 
+Easy stakeholder is more align with real world. They can choose from different extablished liquid contract just like in realworld ETH holder can choose solo stake or use liquid protocol like lido or rocket pool. However in hard ETH stakeholders, they can choose the margin of their liquid pool. But the min pledge requirements is fixed.
 
 ### Pool Operation strategy
 

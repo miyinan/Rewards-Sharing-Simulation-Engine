@@ -453,7 +453,7 @@ def plot_line_sns(data, execution_id, color, x_label, y_label, filename, equilib
     pivot_colour = 'gold'
     color=sns.color_palette('Paired')[color]
 
-    fig = plt.figure(figsize=(6, 4))
+    fig = plt.figure(figsize=(6, 6))
     sns.lineplot(data=data, color=color,label=y_label)
     plt.scatter(x=1, y=data.iloc[1], color=color, marker='o')
     plt.text(1,data.iloc[1]*(1+0.04),f'{data.iloc[1]:.2f}',fontsize=10)
@@ -484,7 +484,7 @@ def plot_multiple_lines(data_dict, execution_id, x_label, y_label,filename, equi
     sns.set_context("notebook", rc={"grid.linewidth": 0.4, "grid.alpha": 0.4, "grid.dashes": (1, 1)})  # 调整网格样式和间距
     equilibrium_colour = 'mediumseagreen'
     pivot_colour = 'gold'
-    fig = plt.figure(figsize=(8, 5))
+    fig = plt.figure(figsize=(6, 6))
     i=0 # for setting color
     
     # change data_dict to dataframes,with seperate columns
@@ -505,8 +505,7 @@ def plot_multiple_lines(data_dict, execution_id, x_label, y_label,filename, equi
         for i, step in enumerate(equilibrium_steps):
             label = "Equilibrium reached at step "+str(step) if i == 0 else ""
             plt.axvline(x=step, label=label, c=equilibrium_colour)
-            #plt.text(step-1,plt.ylim()[0]-2,f'{step}',fontsize=10)
-            
+            #plt.text(step-1,plt.ylim()[0]-2,f'{step}',fontsize=10)        
     
     for i, step in enumerate(pivot_steps):
         label = "Parameter change" if i == 0 else ""

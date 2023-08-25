@@ -480,7 +480,7 @@ class Ethereum_Sim(Model):
         args.pop('args')
         
         if args['metrics'] is None:
-            args['metrics'] = [20,5,6,7,8,9,13,17,19,24]
+            args['metrics'] = [20,5,6,7,8,9,13,17,19,24,21,22]
         if args['agent_profile'] is None: 
             args['agent_profile'] = 'solo' # all non-myopic-agents
         

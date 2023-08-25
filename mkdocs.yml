@@ -2,9 +2,9 @@ site_name: Rewards Sharing Simulation Engine for Ethereum - Docs
 nav:
         - Home: index.md
         - Configuration: configuration.md
+        - Stakeholder profiles: stakeholders.md
         - Metrics: metrics.md
         - Examples: examples.md
-        - FAQ: faq.md
-        - Stakeholder profiles: stakeholders.md
+        
 theme: gitbook
 plugins: []

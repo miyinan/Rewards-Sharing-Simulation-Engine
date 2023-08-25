@@ -37,9 +37,9 @@ class LiquidContract:
 def liquid_staking_list():
     contract_list = [
          LiquidContract(margin=0.00, min_pledge_factor=1.00, insurance_factor=0,name="solo_staking"),
-        #LiquidContract(margin=0.1, min_pledge_factor=0.75, insurance_factor=0.1,name="stake_pool_1"),
+        LiquidContract(margin=0.1, min_pledge_factor=0.75, insurance_factor=0.1,name="stake_pool_1"),
         LiquidContract(margin=0.15, min_pledge_factor=0.5, insurance_factor=0.1,name="stake_pool_2"),
-        #LiquidContract(margin=0.2, min_pledge_factor=0.25, insurance_factor=0.1,name="stake_pool_3"),
+        LiquidContract(margin=0.2, min_pledge_factor=0.25, insurance_factor=0.1,name="stake_pool_3"),
     ]
     sorted_contracts = sorted(contract_list, key=lambda item: item.min_pledge_factor, reverse=True)
     return sorted_contracts
