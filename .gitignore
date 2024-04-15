@@ -6,7 +6,7 @@
 **.pkl
 **/dist
 **/build
-**/output
+
 venv
 .idea/
 node_modules

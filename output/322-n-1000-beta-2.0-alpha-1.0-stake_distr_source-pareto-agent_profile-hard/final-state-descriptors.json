@@ -1,0 +1,15 @@
+{
+    "Equilibrium reached": "Yes",
+    "Pool count": {
+        "solo": 144,
+        "liquid": 240,
+        "total": 384
+    },
+    "Operator count": {
+        "solo": 131,
+        "liquid": 88,
+        "total": 209
+    },
+    "Nakamoto coefficient": "50",
+    "Total pledge fraction": 0.4046
+}

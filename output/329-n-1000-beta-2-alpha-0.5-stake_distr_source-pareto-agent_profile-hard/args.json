@@ -1,0 +1,39 @@
+{
+    "n": 1000,
+    "beta": 2,
+    "alpha": [
+        0.5
+    ],
+    "stake_distr_source": "pareto",
+    "agent_profile": "hard",
+    "inactive_stake_fraction": 0,
+    "inactive_stake_fraction_known": false,
+    "relative_utility_threshold": 0,
+    "absolute_utility_threshold": 1e-09,
+    "seed": 44,
+    "pareto_param": 2.0,
+    "max_iterations": 1000,
+    "cost_min": 0.0001,
+    "cost_max": 0.001,
+    "extra_pool_cost_fraction": 0.4,
+    "agent_activation_order": "semisimulaneous",
+    "iterations_after_convergence": 10,
+    "reward_scheme": 0,
+    "execution_id": "",
+    "seq_id": -1,
+    "parent_dir": "",
+    "metrics": [
+        20,
+        5,
+        6,
+        7,
+        8,
+        9,
+        13,
+        17,
+        19,
+        24
+    ],
+    "generate_graphs": true,
+    "liquidity": 0.1
+}
