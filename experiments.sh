@@ -3,6 +3,8 @@
 # All experiments from the Examples page of the project's documentation are listed here
 # If your Python 3.9 installation has an alias different from python3.9 you have to replace it in all commands
 
+# this is for cardano, not for the project
+
 echo 'Run with 1000 agents, k = 100 and a0 = 0.3:'
 python3.9 main.py --n=1000 --k=100 --a0=0.3 --execution_id=baseline
 
